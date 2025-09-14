@@ -1,0 +1,75 @@
+"use client";
+
+import React, { useState } from "react";
+import { useRouter } from "next/navigation";
+import Register from "@/components/Register";
+import Login from "@/components/Login";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
+
+export default function Home() {
+  const [loginMode, setLoginMode] = useState(true);
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-blue-50 flex items-center justify-center p-4">
+      {/* Background Pattern */}
+      <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiNmOWZhZmIiIGZpbGwtb3BhY2l0eT0iMC4wNSI+PGNpcmNsZSBjeD0iNSIgY3k9IjUiIHI9IjUiLz48L2c+PC9nPjwvc3ZnPg==')] opacity-40"></div>
+
+      <div className="relative w-full max-w-md">
+        {/* Company/Brand Header */}
+        <div className="text-center mb-8">
+          <div className="inline-flex items-center justify-center w-16 h-16 bg-primary rounded-2xl mb-4 shadow-lg">
+            <svg
+              className="w-8 h-8 text-primary-foreground"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"
+              />
+            </svg>
+          </div>
+          <h1 className="text-2xl font-bold text-foreground mb-2">
+            Enterprise Portal
+          </h1>
+          <p className="text-muted-foreground text-sm">
+            Secure access to your professional workspace
+          </p>
+        </div>
+
+        <Card className="shadow-2xl border-0 bg-card/95 backdrop-blur-sm">
+          <CardHeader className="pb-4">
+            <div className="flex items-center justify-center space-x-1 mb-4">
+              <div
+                className={`h-1 w-8 rounded-full transition-colors duration-200 ${
+                  loginMode ? "bg-primary" : "bg-muted"
+                }`}
+              ></div>
+              <div
+                className={`h-1 w-8 rounded-full transition-colors duration-200 ${
+                  !loginMode ? "bg-primary" : "bg-muted"
+                }`}
+              ></div>
+            </div>
+          </CardHeader>
+          <CardContent className="px-8 pb-8">
+            {loginMode ? (
+              <Login setLoginMode={setLoginMode} />
+            ) : (
+              <Register setLoginMode={setLoginMode} />
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Footer */}
+        <div className="text-center mt-6 text-xs text-muted-foreground">
+          <p>© 2025 Enterprise Portal. All rights reserved.</p>
+          <p className="mt-1">Secure • Professional • Reliable</p>
+        </div>
+      </div>
+    </div>
+  );
+}
