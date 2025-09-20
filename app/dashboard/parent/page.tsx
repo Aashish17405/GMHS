@@ -2,19 +2,29 @@
 
 import axios from "axios";
 import { useEffect, useState } from "react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { 
-  Users, 
-  GraduationCap, 
-  Calendar, 
-  Clock, 
-  BookOpen, 
+import { SubmitComplaintModal } from "@/components/SubmitComplaintModal";
+import { ViewComplaintModal } from "@/components/ViewComplaintModal";
+import {
+  Users,
+  GraduationCap,
+  Calendar,
+  Clock,
+  BookOpen,
   UserCheck,
   Activity,
   AlertCircle,
-  Loader2
+  Loader2,
+  MessageSquare,
+  AlertTriangle,
 } from "lucide-react";
 
 interface Student {
@@ -38,10 +48,40 @@ interface ParentData {
   students: Student[];
 }
 
+interface Complaint {
+  id: string;
+  title: string;
+  description: string;
+  type: string;
+  status: string;
+  resolution?: string;
+  createdAt: string;
+  updatedAt: string;
+  resolvedAt?: string;
+  student: {
+    id: string;
+    name: string;
+    className: string;
+  };
+  parent: {
+    id: string;
+    name: string;
+    email: string;
+  };
+  teacher?: {
+    id: string;
+    name: string;
+    email: string;
+  };
+}
+
 export default function ParentDashboard() {
   const [loading, setLoading] = useState<boolean>(false);
+  const [complaintsLoading, setComplaintsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [data, setData] = useState<ParentData | null>(null);
+  const [complaints, setComplaints] = useState<Complaint[]>([]);
+  const [viewComplaint, setViewComplaint] = useState<Complaint | null>(null);
   const [parentId, setParentId] = useState<string | null>(null);
 
   useEffect(() => {
@@ -53,6 +93,7 @@ export default function ParentDashboard() {
   useEffect(() => {
     if (parentId) {
       fetchData();
+      fetchComplaints();
     }
   }, [parentId]);
 
@@ -66,9 +107,25 @@ export default function ParentDashboard() {
       setData(response.data);
       console.log(response.data);
     } catch (err: any) {
-      setError(err.response?.data?.error || err.message || "Failed to fetch data");
+      setError(
+        err.response?.data?.error || err.message || "Failed to fetch data"
+      );
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchComplaints = async () => {
+    if (!parentId) return;
+
+    try {
+      setComplaintsLoading(true);
+      const response = await axios.get(`/api/complaints?parentId=${parentId}`);
+      setComplaints(response.data.complaints || []);
+    } catch (err: any) {
+      console.error("Error fetching complaints:", err);
+    } finally {
+      setComplaintsLoading(false);
     }
   };
 
@@ -92,19 +149,34 @@ export default function ParentDashboard() {
 
   const getTotalActions = () => {
     if (!data?.students) return 0;
-    return data.students.reduce((total, student) => total + student.actions.length, 0);
+    return data.students.reduce(
+      (total, student) => total + student.actions.length,
+      0
+    );
+  };
+
+  const getPendingComplaints = () => {
+    return complaints.filter(
+      (complaint) =>
+        complaint.status === "PENDING" || complaint.status === "IN_PROGRESS"
+    ).length;
   };
 
   const getRecentActions = () => {
     if (!data?.students) return [];
-    const allActions = data.students.flatMap(student => 
-      student.actions.map(action => ({
+    const allActions = data.students.flatMap((student) =>
+      student.actions.map((action) => ({
         ...action,
         studentName: student.name,
-        studentClass: student.className
+        studentClass: student.className,
       }))
     );
-    return allActions.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()).slice(0, 5);
+    return allActions
+      .sort(
+        (a, b) =>
+          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+      )
+      .slice(0, 5);
   };
 
   // Show loading while parentId is being fetched
@@ -126,7 +198,9 @@ export default function ParentDashboard() {
           <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
             <div className="flex items-center space-x-3">
               <Loader2 className="h-6 w-6 animate-spin text-[#1e3a8a]" />
-              <h1 className="text-3xl font-bold text-[#1e3a8a]">Loading Parent Dashboard...</h1>
+              <h1 className="text-3xl font-bold text-[#1e3a8a]">
+                Loading Parent Dashboard...
+              </h1>
             </div>
           </div>
         </div>
@@ -141,14 +215,25 @@ export default function ParentDashboard() {
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-3xl font-bold text-[#1e3a8a] mb-2">Parent Dashboard</h1>
-              <p className="text-gray-600">Monitor your children's progress and activities</p>
+              <h1 className="text-3xl font-bold text-[#1e3a8a] mb-2">
+                Parent Dashboard
+              </h1>
+              <p className="text-gray-600">
+                Monitor your children's progress and activities
+              </p>
             </div>
-            <div className="flex items-center space-x-2 text-[#1e3a8a]">
-              <Users className="h-6 w-6" />
-              <span className="text-sm font-medium">
-                {data?.students?.length || 0} Child{data?.students?.length !== 1 ? 'ren' : ''}
-              </span>
+            <div className="flex items-center gap-4">
+              <SubmitComplaintModal
+                parentId={parentId || ""}
+                onComplaintSubmitted={fetchComplaints}
+              />
+              <div className="flex items-center space-x-2 text-[#1e3a8a]">
+                <Users className="h-6 w-6" />
+                <span className="text-sm font-medium">
+                  {data?.students?.length || 0} Child
+                  {data?.students?.length !== 1 ? "ren" : ""}
+                </span>
+              </div>
             </div>
           </div>
         </div>
@@ -165,43 +250,72 @@ export default function ParentDashboard() {
 
         {/* Stats Cards */}
         {data?.students && (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
             <Card className="bg-white shadow-sm border border-gray-200 hover:shadow-md transition-shadow">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium text-gray-600">Total Children</CardTitle>
+                <CardTitle className="text-sm font-medium text-gray-600">
+                  Total Children
+                </CardTitle>
                 <div className="p-2 rounded-full bg-blue-100">
                   <Users className="h-4 w-4 text-blue-600" />
                 </div>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-[#1e3a8a] mb-1">{data.students.length}</div>
+                <div className="text-2xl font-bold text-[#1e3a8a] mb-1">
+                  {data.students.length}
+                </div>
                 <p className="text-xs text-gray-500">Enrolled in school</p>
               </CardContent>
             </Card>
 
             <Card className="bg-white shadow-sm border border-gray-200 hover:shadow-md transition-shadow">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium text-gray-600">Total Activities</CardTitle>
+                <CardTitle className="text-sm font-medium text-gray-600">
+                  Total Activities
+                </CardTitle>
                 <div className="p-2 rounded-full bg-green-100">
                   <Activity className="h-4 w-4 text-green-600" />
                 </div>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-[#1e3a8a] mb-1">{getTotalActions()}</div>
+                <div className="text-2xl font-bold text-[#1e3a8a] mb-1">
+                  {getTotalActions()}
+                </div>
                 <p className="text-xs text-gray-500">Recorded actions</p>
               </CardContent>
             </Card>
 
             <Card className="bg-white shadow-sm border border-gray-200 hover:shadow-md transition-shadow">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium text-gray-600">Recent Activity</CardTitle>
+                <CardTitle className="text-sm font-medium text-gray-600">
+                  My Complaints
+                </CardTitle>
                 <div className="p-2 rounded-full bg-orange-100">
-                  <Clock className="h-4 w-4 text-orange-600" />
+                  <MessageSquare className="h-4 w-4 text-orange-600" />
                 </div>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-[#1e3a8a] mb-1">{getRecentActions().length}</div>
-                <p className="text-xs text-gray-500">Actions this week</p>
+                <div className="text-2xl font-bold text-[#1e3a8a] mb-1">
+                  {complaints.length}
+                </div>
+                <p className="text-xs text-gray-500">Total submitted</p>
+              </CardContent>
+            </Card>
+
+            <Card className="bg-white shadow-sm border border-gray-200 hover:shadow-md transition-shadow">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium text-gray-600">
+                  Pending Issues
+                </CardTitle>
+                <div className="p-2 rounded-full bg-red-100">
+                  <AlertTriangle className="h-4 w-4 text-red-600" />
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold text-[#1e3a8a] mb-1">
+                  {getPendingComplaints()}
+                </div>
+                <p className="text-xs text-gray-500">Awaiting response</p>
               </CardContent>
             </Card>
           </div>
@@ -211,7 +325,10 @@ export default function ParentDashboard() {
         {data?.students && data.students.length > 0 ? (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {data.students.map((student) => (
-              <Card key={student.id} className="bg-white shadow-sm border border-gray-200 hover:shadow-md transition-shadow">
+              <Card
+                key={student.id}
+                className="bg-white shadow-sm border border-gray-200 hover:shadow-md transition-shadow"
+              >
                 <CardHeader>
                   <div className="flex items-center justify-between">
                     <div className="flex items-center space-x-3">
@@ -221,14 +338,19 @@ export default function ParentDashboard() {
                         </span>
                       </div>
                       <div>
-                        <CardTitle className="text-xl text-[#1e3a8a]">{student.name}</CardTitle>
+                        <CardTitle className="text-xl text-[#1e3a8a]">
+                          {student.name}
+                        </CardTitle>
                         <CardDescription className="flex items-center space-x-2">
                           <GraduationCap className="h-4 w-4" />
                           <span>{student.className}</span>
                         </CardDescription>
                       </div>
                     </div>
-                    <Badge variant="secondary" className="bg-blue-100 text-blue-800">
+                    <Badge
+                      variant="secondary"
+                      className="bg-blue-100 text-blue-800"
+                    >
                       Active
                     </Badge>
                   </div>
@@ -238,11 +360,17 @@ export default function ParentDashboard() {
                   <div className="bg-gray-50 rounded-lg p-4">
                     <div className="flex items-center space-x-2 mb-2">
                       <UserCheck className="h-4 w-4 text-[#1e3a8a]" />
-                      <span className="font-medium text-[#1e3a8a]">Teacher</span>
+                      <span className="font-medium text-[#1e3a8a]">
+                        Teacher
+                      </span>
                     </div>
                     <div>
-                      <p className="font-medium text-gray-900">{student.teacher.name}</p>
-                      <p className="text-sm text-gray-600">{student.teacher.email}</p>
+                      <p className="font-medium text-gray-900">
+                        {student.teacher.name}
+                      </p>
+                      <p className="text-sm text-gray-600">
+                        {student.teacher.email}
+                      </p>
                     </div>
                   </div>
 
@@ -256,7 +384,9 @@ export default function ParentDashboard() {
                   <div>
                     <div className="flex items-center space-x-2 mb-3">
                       <BookOpen className="h-4 w-4 text-[#1e3a8a]" />
-                      <span className="font-medium text-[#1e3a8a]">Recent Activities</span>
+                      <span className="font-medium text-[#1e3a8a]">
+                        Recent Activities
+                      </span>
                       <Badge variant="outline" className="text-xs">
                         {student.actions.length} total
                       </Badge>
@@ -264,8 +394,13 @@ export default function ParentDashboard() {
                     {student.actions.length > 0 ? (
                       <div className="space-y-2 max-h-40 overflow-y-auto">
                         {student.actions.slice(0, 3).map((action) => (
-                          <div key={action.id} className="bg-blue-50 rounded-lg p-3 border border-blue-200">
-                            <p className="text-sm text-gray-900 mb-1">{action.description}</p>
+                          <div
+                            key={action.id}
+                            className="bg-blue-50 rounded-lg p-3 border border-blue-200"
+                          >
+                            <p className="text-sm text-gray-900 mb-1">
+                              {action.description}
+                            </p>
                             <p className="text-xs text-gray-600 flex items-center space-x-1">
                               <Clock className="h-3 w-3" />
                               <span>{formatDateTime(action.createdAt)}</span>
@@ -292,7 +427,9 @@ export default function ParentDashboard() {
           <Card className="bg-white shadow-sm border border-gray-200">
             <CardContent className="text-center py-12">
               <Users className="mx-auto h-12 w-12 text-gray-400 mb-4" />
-              <h3 className="text-lg font-medium text-gray-900 mb-2">No Children Found</h3>
+              <h3 className="text-lg font-medium text-gray-900 mb-2">
+                No Children Found
+              </h3>
               <p className="text-gray-500">
                 You don't have any children enrolled in the system yet.
               </p>
@@ -315,7 +452,10 @@ export default function ParentDashboard() {
             <CardContent>
               <div className="space-y-3">
                 {getRecentActions().map((action) => (
-                  <div key={`${action.id}-${action.studentName}`} className="flex items-start space-x-3 p-3 bg-gray-50 rounded-lg">
+                  <div
+                    key={`${action.id}-${action.studentName}`}
+                    className="flex items-start space-x-3 p-3 bg-gray-50 rounded-lg"
+                  >
                     <div className="h-8 w-8 rounded-full bg-[#1e3a8a] flex items-center justify-center flex-shrink-0">
                       <span className="text-white font-medium text-sm">
                         {action.studentName.charAt(0).toUpperCase()}
@@ -323,12 +463,16 @@ export default function ParentDashboard() {
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center space-x-2 mb-1">
-                        <span className="font-medium text-gray-900">{action.studentName}</span>
+                        <span className="font-medium text-gray-900">
+                          {action.studentName}
+                        </span>
                         <Badge variant="secondary" className="text-xs">
                           {action.studentClass}
                         </Badge>
                       </div>
-                      <p className="text-sm text-gray-700 mb-1">{action.description}</p>
+                      <p className="text-sm text-gray-700 mb-1">
+                        {action.description}
+                      </p>
                       <p className="text-xs text-gray-500 flex items-center space-x-1">
                         <Clock className="h-3 w-3" />
                         <span>{formatDateTime(action.createdAt)}</span>
@@ -340,6 +484,121 @@ export default function ParentDashboard() {
             </CardContent>
           </Card>
         )}
+
+        {/* My Complaints Section */}
+        <Card className="bg-white shadow-sm border border-gray-200">
+          <CardHeader>
+            <CardTitle className="text-xl font-semibold text-[#1e3a8a] flex items-center gap-2">
+              <MessageSquare className="h-5 w-5" />
+              My Complaints
+            </CardTitle>
+            <CardDescription>
+              View and track your submitted complaints and their status
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            {complaintsLoading ? (
+              <div className="flex items-center justify-center py-8">
+                <Loader2 className="h-6 w-6 animate-spin text-[#1e3a8a] mr-2" />
+                <span className="text-gray-600">Loading complaints...</span>
+              </div>
+            ) : complaints.length === 0 ? (
+              <div className="text-center py-8">
+                <MessageSquare className="mx-auto h-12 w-12 text-gray-400 mb-4" />
+                <h3 className="text-lg font-medium text-gray-900 mb-2">
+                  No Complaints Yet
+                </h3>
+                <p className="text-gray-500 mb-4">
+                  You haven't submitted any complaints yet. Use the "Submit
+                  Complaint" button above to raise any concerns.
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {complaints.map((complaint) => (
+                  <div
+                    key={complaint.id}
+                    className="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition-colors"
+                  >
+                    <div className="flex items-start justify-between mb-3">
+                      <div className="flex-1">
+                        <h4 className="font-semibold text-gray-900 mb-1">
+                          {complaint.title}
+                        </h4>
+                        <p className="text-sm text-gray-600 mb-2 line-clamp-2">
+                          {complaint.description}
+                        </p>
+                        <div className="flex items-center gap-3 text-xs text-gray-500">
+                          <span>Student: {complaint.student.name}</span>
+                          <span>•</span>
+                          <span>
+                            Submitted: {formatDate(complaint.createdAt)}
+                          </span>
+                        </div>
+                      </div>
+                      <div className="flex flex-col items-end gap-2">
+                        {complaint.status === "PENDING" && (
+                          <Badge
+                            variant="secondary"
+                            className="bg-yellow-100 text-yellow-800"
+                          >
+                            <Clock className="mr-1 h-3 w-3" />
+                            Pending
+                          </Badge>
+                        )}
+                        {complaint.status === "IN_PROGRESS" && (
+                          <Badge
+                            variant="secondary"
+                            className="bg-blue-100 text-blue-800"
+                          >
+                            <MessageSquare className="mr-1 h-3 w-3" />
+                            In Progress
+                          </Badge>
+                        )}
+                        {complaint.status === "RESOLVED" && (
+                          <Badge
+                            variant="secondary"
+                            className="bg-green-100 text-green-800"
+                          >
+                            <Activity className="mr-1 h-3 w-3" />
+                            Resolved
+                          </Badge>
+                        )}
+                        <button
+                          onClick={() => setViewComplaint(complaint)}
+                          className="text-sm text-blue-600 hover:text-blue-700 hover:underline"
+                        >
+                          View Details
+                        </button>
+                      </div>
+                    </div>
+                    {complaint.resolution && (
+                      <div className="mt-3 p-3 bg-green-50 border border-green-200 rounded">
+                        <p className="text-sm font-medium text-green-800 mb-1">
+                          Teacher's Response:
+                        </p>
+                        <p className="text-sm text-green-700">
+                          {complaint.resolution}
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* View Complaint Modal */}
+        <ViewComplaintModal
+          complaint={viewComplaint}
+          open={viewComplaint !== null}
+          onOpenChange={(open) => {
+            if (!open) {
+              setViewComplaint(null);
+            }
+          }}
+        />
       </div>
     </div>
   );

@@ -41,6 +41,22 @@ export async function GET() {
     const sevenDaysAgo = new Date();
     sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
 
+    // Get complaint statistics
+    const totalComplaints = await prisma.complaint.count();
+    const pendingComplaints = await prisma.complaint.count({
+      where: { status: "PENDING" },
+    });
+    const resolvedComplaints = await prisma.complaint.count({
+      where: { status: "RESOLVED" },
+    });
+    const recentComplaints = await prisma.complaint.count({
+      where: {
+        createdAt: {
+          gte: sevenDaysAgo,
+        },
+      },
+    });
+
     const recentActions = await prisma.action.count({
       where: {
         createdAt: {
@@ -160,6 +176,16 @@ export async function GET() {
         recentActions,
         dailyActivity: activityByDay,
         avgDailyActivity: (recentActions / 7).toFixed(1),
+      },
+      complaintStats: {
+        total: totalComplaints,
+        pending: pendingComplaints,
+        resolved: resolvedComplaints,
+        recent: recentComplaints,
+        resolutionRate:
+          totalComplaints > 0
+            ? ((resolvedComplaints / totalComplaints) * 100).toFixed(1)
+            : "0",
       },
       teacherStats: {
         topPerformers: teacherStats,

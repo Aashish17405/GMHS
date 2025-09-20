@@ -12,7 +12,17 @@ import { CreateStudentModal } from "@/components/CreateStudentModal";
 import { StudentsTable } from "@/components/StudentsTable";
 import { EditStudentModal } from "@/components/EditStudentModal";
 import { DeleteStudentModal } from "@/components/DeleteStudentModal";
-import { Users, GraduationCap, Activity, TrendingUp } from "lucide-react";
+import { AddActionModal } from "@/components/AddActionModal";
+import { ComplaintsTable } from "@/components/ComplaintsTable";
+import { RespondToComplaintModal } from "@/components/RespondToComplaintModal";
+import { ViewComplaintModal } from "@/components/ViewComplaintModal";
+import {
+  Users,
+  GraduationCap,
+  Activity,
+  TrendingUp,
+  MessageSquare,
+} from "lucide-react";
 import axios from "axios";
 
 interface Student {
@@ -36,14 +46,49 @@ interface Student {
   }>;
 }
 
+interface Complaint {
+  id: string;
+  title: string;
+  description: string;
+  type: string;
+  status: string;
+  resolution?: string;
+  createdAt: string;
+  updatedAt: string;
+  resolvedAt?: string;
+  student: {
+    id: string;
+    name: string;
+    className: string;
+  };
+  parent: {
+    id: string;
+    name: string;
+    email: string;
+  };
+  teacher?: {
+    id: string;
+    name: string;
+    email: string;
+  };
+}
+
 export default function TeacherDashboardPage() {
   const [students, setStudents] = useState<Student[]>([]);
+  const [complaints, setComplaints] = useState<Complaint[]>([]);
   const [loading, setLoading] = useState(true);
+  const [complaintsLoading, setComplaintsLoading] = useState(true);
   const [editStudent, setEditStudent] = useState<Student | null>(null);
   const [deleteStudent, setDeleteStudent] = useState<{
     id: string;
     name: string;
   } | null>(null);
+  const [addActionStudentId, setAddActionStudentId] = useState<string | null>(
+    null
+  );
+  const [respondToComplaint, setRespondToComplaint] =
+    useState<Complaint | null>(null);
+  const [viewComplaint, setViewComplaint] = useState<Complaint | null>(null);
   const [teacherId, setTeacherId] = useState<string | null>(null);
 
   useEffect(() => {
@@ -55,6 +100,7 @@ export default function TeacherDashboardPage() {
   useEffect(() => {
     if (teacherId) {
       fetchStudents();
+      fetchComplaints();
     }
   }, [teacherId]);
 
@@ -72,6 +118,22 @@ export default function TeacherDashboardPage() {
     }
   };
 
+  const fetchComplaints = async () => {
+    if (!teacherId) return;
+
+    setComplaintsLoading(true);
+    try {
+      const response = await axios.get(
+        `/api/complaints?teacherId=${teacherId}`
+      );
+      setComplaints(response.data.complaints);
+    } catch (error) {
+      console.error("Error fetching complaints:", error);
+    } finally {
+      setComplaintsLoading(false);
+    }
+  };
+
   const handleEditStudent = (student: Student) => {
     setEditStudent(student);
   };
@@ -83,6 +145,18 @@ export default function TeacherDashboardPage() {
     }
   };
 
+  const handleAddAction = (studentId: string) => {
+    setAddActionStudentId(studentId);
+  };
+
+  const handleRespondToComplaint = (complaint: Complaint) => {
+    setRespondToComplaint(complaint);
+  };
+
+  const handleViewComplaint = (complaint: Complaint) => {
+    setViewComplaint(complaint);
+  };
+
   const getTotalActions = () => {
     return students.reduce(
       (total, student) => total + student.actions.length,
@@ -90,9 +164,32 @@ export default function TeacherDashboardPage() {
     );
   };
 
+  const getPendingComplaints = () => {
+    return complaints.filter(
+      (complaint) =>
+        complaint.status === "PENDING" || complaint.status === "IN_PROGRESS"
+    ).length;
+  };
+
   const getUniqueClasses = () => {
     const classes = new Set(students.map((student) => student.className));
     return classes.size;
+  };
+
+  const getRecentActions = () => {
+    const allActions = students.flatMap((student) =>
+      student.actions.map((action) => ({
+        ...action,
+        studentName: student.name,
+        studentClass: student.className,
+      }))
+    );
+    return allActions
+      .sort(
+        (a, b) =>
+          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+      )
+      .slice(0, 5);
   };
 
   const stats = [
@@ -115,18 +212,18 @@ export default function TeacherDashboardPage() {
     {
       title: "Total Actions",
       value: getTotalActions().toString(),
-      description: "Actions recorded this month",
+      description: "Total actions recorded",
       icon: Activity,
       color: "text-orange-600",
       bgColor: "bg-orange-100",
     },
     {
-      title: "Active Today",
-      value: "12", // Mock data
-      description: "Students with activity today",
-      icon: TrendingUp,
-      color: "text-purple-600",
-      bgColor: "bg-purple-100",
+      title: "Pending Complaints",
+      value: getPendingComplaints().toString(),
+      description: "Complaints needing attention",
+      icon: MessageSquare,
+      color: "text-red-600",
+      bgColor: "bg-red-100",
     },
   ];
 
@@ -156,10 +253,16 @@ export default function TeacherDashboardPage() {
                 Manage your students and track their progress
               </p>
             </div>
-            <CreateStudentModal
-              teacherId={teacherId || ""}
-              onStudentCreated={fetchStudents}
-            />
+            <div className="flex gap-3">
+              <AddActionModal
+                teacherId={teacherId || ""}
+                onActionAdded={fetchStudents}
+              />
+              <CreateStudentModal
+                teacherId={teacherId || ""}
+                onStudentCreated={fetchStudents}
+              />
+            </div>
           </div>
         </div>
 
@@ -205,7 +308,91 @@ export default function TeacherDashboardPage() {
               students={students}
               onEditStudent={handleEditStudent}
               onDeleteStudent={handleDeleteStudent}
+              onAddAction={handleAddAction}
               loading={loading}
+            />
+          </CardContent>
+        </Card>
+
+        {/* Recent Actions */}
+        {!loading && students.length > 0 && (
+          <Card className="bg-white shadow-sm border border-gray-200">
+            <CardHeader>
+              <CardTitle className="text-xl font-semibold text-[#1e3a8a] flex items-center gap-2">
+                <Activity className="h-5 w-5" />
+                Recent Actions
+              </CardTitle>
+              <CardDescription>
+                Latest actions recorded across all your students
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {getRecentActions().length === 0 ? (
+                <div className="text-center py-8 text-gray-500">
+                  <Activity className="mx-auto h-8 w-8 mb-3 text-gray-400" />
+                  <p>No recent actions recorded yet.</p>
+                  <p className="text-sm">
+                    Use the "Add Action" button to start tracking student
+                    interactions.
+                  </p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {getRecentActions().map((action) => (
+                    <div
+                      key={action.id}
+                      className="flex items-start justify-between p-3 bg-gray-50 rounded-lg border border-gray-100"
+                    >
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-1">
+                          <span className="font-medium text-gray-900">
+                            {action.studentName}
+                          </span>
+                          <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">
+                            {action.studentClass}
+                          </span>
+                        </div>
+                        <p className="text-sm text-gray-700 mb-1">
+                          {action.description}
+                        </p>
+                        <p className="text-xs text-gray-500">
+                          {new Date(action.createdAt).toLocaleDateString(
+                            "en-US",
+                            {
+                              month: "short",
+                              day: "numeric",
+                              hour: "2-digit",
+                              minute: "2-digit",
+                            }
+                          )}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Complaints Section */}
+        <Card className="bg-white shadow-sm border border-gray-200">
+          <CardHeader>
+            <CardTitle className="text-xl font-semibold text-[#1e3a8a] flex items-center gap-2">
+              <MessageSquare className="h-5 w-5" />
+              Parent Complaints
+            </CardTitle>
+            <CardDescription>
+              Complaints submitted by parents that require your attention and
+              response
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <ComplaintsTable
+              complaints={complaints}
+              onRespondToComplaint={handleRespondToComplaint}
+              onViewComplaint={handleViewComplaint}
+              loading={complaintsLoading}
             />
           </CardContent>
         </Card>
@@ -225,6 +412,48 @@ export default function TeacherDashboardPage() {
           open={deleteStudent !== null}
           onOpenChange={(open) => !open && setDeleteStudent(null)}
           onStudentDeleted={fetchStudents}
+        />
+
+        {/* Add Action Modal for specific student */}
+        <AddActionModal
+          teacherId={teacherId || ""}
+          selectedStudentId={addActionStudentId || undefined}
+          open={addActionStudentId !== null}
+          onOpenChange={(open) => {
+            if (!open) {
+              setAddActionStudentId(null);
+            }
+          }}
+          onActionAdded={() => {
+            setAddActionStudentId(null);
+            fetchStudents();
+          }}
+        />
+
+        {/* Complaint Modals */}
+        <RespondToComplaintModal
+          complaint={respondToComplaint}
+          teacherId={teacherId || ""}
+          open={respondToComplaint !== null}
+          onOpenChange={(open) => {
+            if (!open) {
+              setRespondToComplaint(null);
+            }
+          }}
+          onComplaintUpdated={() => {
+            setRespondToComplaint(null);
+            fetchComplaints();
+          }}
+        />
+
+        <ViewComplaintModal
+          complaint={viewComplaint}
+          open={viewComplaint !== null}
+          onOpenChange={(open) => {
+            if (!open) {
+              setViewComplaint(null);
+            }
+          }}
         />
       </div>
     </div>

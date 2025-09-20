@@ -27,8 +27,10 @@ import {
   Trash2,
   Shield,
   ChevronRight,
+  MessageSquare,
 } from "lucide-react";
 import axios from "axios";
+import { AdminComplaintsTable } from "@/components/AdminComplaintsTable";
 
 interface DashboardStats {
   userStats: {
@@ -57,6 +59,13 @@ interface DashboardStats {
     }>;
     avgDailyActivity: string;
   };
+  complaintStats: {
+    total: number;
+    pending: number;
+    resolved: number;
+    recent: number;
+    resolutionRate: string;
+  };
   teacherStats: {
     topPerformers: Array<{
       id: string;
@@ -83,6 +92,13 @@ interface Teacher {
     recentActivityCount: number;
     classCount: number;
     avgActionsPerStudent: string;
+    totalComplaints: number;
+    pendingComplaints: number;
+    resolvedComplaints: number;
+    inProgressComplaints: number;
+    complaintResolutionRate: number;
+    avgResolutionDays: number;
+    recentComplaints: number;
   };
 }
 
@@ -92,6 +108,8 @@ interface TeachersData {
     totalTeachers: number;
     totalStudents: number;
     totalActions: number;
+    totalComplaints: number;
+    avgResolutionRate: string;
   };
 }
 
@@ -104,7 +122,7 @@ export default function AdminDashboard() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<
-    "overview" | "teachers" | "analytics"
+    "overview" | "teachers" | "analytics" | "complaints"
   >("overview");
 
   useEffect(() => {
@@ -221,6 +239,7 @@ export default function AdminDashboard() {
             {[
               { id: "overview", label: "System Overview", icon: BarChart3 },
               { id: "teachers", label: "Teacher Management", icon: Users },
+              { id: "complaints", label: "Complaints", icon: MessageSquare },
               { id: "analytics", label: "Analytics", icon: TrendingUp },
             ].map((tab) => (
               <button
@@ -243,7 +262,7 @@ export default function AdminDashboard() {
         {activeTab === "overview" && dashboardStats && (
           <div className="space-y-6">
             {/* Key Metrics Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
               <Card className="bg-white shadow-sm border border-gray-200 hover:shadow-md transition-shadow">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                   <CardTitle className="text-sm font-medium text-gray-600">
@@ -322,10 +341,29 @@ export default function AdminDashboard() {
                   </p>
                 </CardContent>
               </Card>
+
+              <Card className="bg-white shadow-sm border border-gray-200 hover:shadow-md transition-shadow">
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium text-gray-600">
+                    Complaints
+                  </CardTitle>
+                  <div className="p-2 rounded-full bg-red-100">
+                    <MessageSquare className="h-4 w-4 text-red-600" />
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold text-[#1e3a8a] mb-1">
+                    {dashboardStats.complaintStats.total}
+                  </div>
+                  <p className="text-xs text-gray-500">
+                    {dashboardStats.complaintStats.resolutionRate}% resolved
+                  </p>
+                </CardContent>
+              </Card>
             </div>
 
             {/* System Health & Top Performers */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               {/* System Health */}
               <Card className="bg-white shadow-sm border border-gray-200">
                 <CardHeader>
@@ -356,6 +394,41 @@ export default function AdminDashboard() {
                       <div className="text-sm text-gray-500">
                         Actions/Student
                       </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Complaint Health */}
+              <Card className="bg-white shadow-sm border border-gray-200">
+                <CardHeader>
+                  <CardTitle className="text-xl font-semibold text-[#1e3a8a] flex items-center gap-2">
+                    <MessageSquare className="h-5 w-5" />
+                    Complaint Health
+                  </CardTitle>
+                  <CardDescription>
+                    Complaint management overview
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="grid grid-cols-3 gap-4">
+                    <div className="text-center">
+                      <div className="text-2xl font-bold text-red-600">
+                        {dashboardStats.complaintStats.pending}
+                      </div>
+                      <div className="text-sm text-gray-500">Pending</div>
+                    </div>
+                    <div className="text-center">
+                      <div className="text-2xl font-bold text-green-600">
+                        {dashboardStats.complaintStats.resolved}
+                      </div>
+                      <div className="text-sm text-gray-500">Resolved</div>
+                    </div>
+                    <div className="text-center">
+                      <div className="text-2xl font-bold text-blue-600">
+                        {dashboardStats.complaintStats.recent}
+                      </div>
+                      <div className="text-sm text-gray-500">Recent (7d)</div>
                     </div>
                   </div>
                 </CardContent>
@@ -411,7 +484,7 @@ export default function AdminDashboard() {
         {activeTab === "teachers" && teachersData && (
           <div className="space-y-6">
             {/* Teachers Summary */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
               <Card className="bg-white shadow-sm border border-gray-200">
                 <CardContent className="p-6">
                   <div className="flex items-center justify-between">
@@ -454,6 +527,22 @@ export default function AdminDashboard() {
                       <div className="text-sm text-gray-500">Total Actions</div>
                     </div>
                     <Activity className="h-8 w-8 text-orange-600" />
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="bg-white shadow-sm border border-gray-200">
+                <CardContent className="p-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <div className="text-2xl font-bold text-[#1e3a8a]">
+                        {teachersData.summary.totalComplaints}
+                      </div>
+                      <div className="text-sm text-gray-500">
+                        Total Complaints
+                      </div>
+                    </div>
+                    <MessageSquare className="h-8 w-8 text-red-600" />
                   </div>
                 </CardContent>
               </Card>
@@ -506,6 +595,30 @@ export default function AdminDashboard() {
                             <span className="text-xs text-gray-500">
                               {teacher.statistics.classCount} classes
                             </span>
+                            <span className="text-xs text-gray-500">
+                              {teacher.statistics.totalComplaints} complaints
+                            </span>
+                          </div>
+                          <div className="flex items-center space-x-2 mt-1">
+                            <Badge
+                              variant="outline"
+                              className={`text-xs ${
+                                teacher.statistics.complaintResolutionRate >= 80
+                                  ? "bg-green-50 text-green-700 border-green-200"
+                                  : teacher.statistics
+                                      .complaintResolutionRate >= 60
+                                  ? "bg-yellow-50 text-yellow-700 border-yellow-200"
+                                  : "bg-red-50 text-red-700 border-red-200"
+                              }`}
+                            >
+                              {teacher.statistics.complaintResolutionRate}%
+                              resolved
+                            </Badge>
+                            {teacher.statistics.avgResolutionDays > 0 && (
+                              <span className="text-xs text-gray-500">
+                                {teacher.statistics.avgResolutionDays}d avg
+                              </span>
+                            )}
                           </div>
                         </div>
                       </div>
@@ -520,6 +633,14 @@ export default function AdminDashboard() {
                         >
                           {teacher.statistics.recentActivityCount} recent
                         </Badge>
+                        {teacher.statistics.pendingComplaints > 0 && (
+                          <Badge
+                            variant="destructive"
+                            className="bg-red-100 text-red-800"
+                          >
+                            {teacher.statistics.pendingComplaints} pending
+                          </Badge>
+                        )}
                         <Button variant="ghost" size="sm">
                           <Edit className="h-4 w-4" />
                         </Button>
@@ -539,6 +660,13 @@ export default function AdminDashboard() {
                 </div>
               </CardContent>
             </Card>
+          </div>
+        )}
+
+        {/* Complaints Tab */}
+        {activeTab === "complaints" && (
+          <div className="space-y-6">
+            <AdminComplaintsTable />
           </div>
         )}
 

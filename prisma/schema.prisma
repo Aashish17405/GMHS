@@ -13,6 +13,21 @@ enum Role {
   PARENT
 }
 
+enum ComplaintStatus {
+  PENDING
+  IN_PROGRESS
+  RESOLVED
+}
+
+enum ComplaintType {
+  ACADEMIC_PERFORMANCE
+  BEHAVIORAL_ISSUES
+  ATTENDANCE
+  HOMEWORK_ISSUES
+  COMMUNICATION
+  OTHER
+}
+
 model User {
   id        String   @id @default(uuid())
   name      String
@@ -26,6 +41,8 @@ model User {
   studentsAsParent Student[] @relation("ParentStudents")
   studentsAsTeacher Student[] @relation("TeacherStudents")
   actions           Action[]  @relation("TeacherActions")
+  complaintsAsParent Complaint[] @relation("ParentComplaints")
+  complaintsAsTeacher Complaint[] @relation("TeacherComplaints")
 }
 
 model Student {
@@ -43,6 +60,7 @@ model Student {
   teacherId String?
 
   actions Action[]
+  complaints Complaint[]
 }
 
 model Action {
@@ -56,4 +74,26 @@ model Action {
 
   teacher   User    @relation("TeacherActions", fields: [teacherId], references: [id])
   teacherId String
+}
+
+model Complaint {
+  id          String          @id @default(uuid())
+  title       String
+  description String
+  type        ComplaintType
+  status      ComplaintStatus @default(PENDING)
+  resolution  String?         // Actions taken by teacher
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+  resolvedAt  DateTime?
+
+  // Relations
+  student   Student @relation(fields: [studentId], references: [id])
+  studentId String
+
+  parent    User    @relation("ParentComplaints", fields: [parentId], references: [id])
+  parentId  String
+
+  teacher   User?   @relation("TeacherComplaints", fields: [teacherId], references: [id])
+  teacherId String?
 }

@@ -33,6 +33,25 @@ export async function GET() {
             createdAt: "desc",
           },
         },
+        complaintsAsTeacher: {
+          include: {
+            student: {
+              select: {
+                name: true,
+                className: true,
+              },
+            },
+            parent: {
+              select: {
+                name: true,
+                email: true,
+              },
+            },
+          },
+          orderBy: {
+            createdAt: "desc",
+          },
+        },
       },
       orderBy: {
         createdAt: "desc",
@@ -47,12 +66,51 @@ export async function GET() {
         0
       );
 
+      // Complaint statistics
+      const complaints = teacher.complaintsAsTeacher;
+      const totalComplaints = complaints.length;
+      const pendingComplaints = complaints.filter(
+        (c) => c.status === "PENDING"
+      ).length;
+      const resolvedComplaints = complaints.filter(
+        (c) => c.status === "RESOLVED"
+      ).length;
+      const inProgressComplaints = complaints.filter(
+        (c) => c.status === "IN_PROGRESS"
+      ).length;
+
+      // Calculate average resolution time for resolved complaints
+      const resolvedComplaintsWithTime = complaints.filter(
+        (c) => c.status === "RESOLVED" && c.resolvedAt
+      );
+      const avgResolutionDays =
+        resolvedComplaintsWithTime.length > 0
+          ? resolvedComplaintsWithTime.reduce((acc, complaint) => {
+              if (complaint.resolvedAt) {
+                const resolutionTime =
+                  new Date(complaint.resolvedAt).getTime() -
+                  new Date(complaint.createdAt).getTime();
+                return acc + resolutionTime / (1000 * 60 * 60 * 24); // Convert to days
+              }
+              return acc;
+            }, 0) / resolvedComplaintsWithTime.length
+          : 0;
+
+      const complaintResolutionRate =
+        totalComplaints > 0
+          ? (resolvedComplaints / totalComplaints) * 100
+          : 100;
+
       // Get recent activity (last 7 days)
       const weekAgo = new Date();
       weekAgo.setDate(weekAgo.getDate() - 7);
 
       const recentActions = teacher.studentsAsTeacher.flatMap((student) =>
         student.actions.filter((action) => new Date(action.createdAt) > weekAgo)
+      );
+
+      const recentComplaints = complaints.filter(
+        (complaint) => new Date(complaint.createdAt) > weekAgo
       );
 
       // Get unique classes
@@ -72,8 +130,18 @@ export async function GET() {
           classCount: uniqueClasses.size,
           avgActionsPerStudent:
             studentCount > 0 ? (totalActions / studentCount).toFixed(1) : "0",
+          // Complaint metrics
+          totalComplaints,
+          pendingComplaints,
+          resolvedComplaints,
+          inProgressComplaints,
+          complaintResolutionRate:
+            Math.round(complaintResolutionRate * 100) / 100,
+          avgResolutionDays: Math.round(avgResolutionDays * 100) / 100,
+          recentComplaints: recentComplaints.length,
         },
         students: teacher.studentsAsTeacher,
+        complaints: complaints.slice(0, 5), // Latest 5 complaints
         recentActivity: recentActions.slice(0, 5).map((action) => ({
           ...action,
           studentName:
@@ -101,6 +169,19 @@ export async function GET() {
             ),
           0
         ),
+        totalComplaints: teachers.reduce(
+          (sum, t) => sum + t.complaintsAsTeacher.length,
+          0
+        ),
+        avgResolutionRate:
+          teachersWithStats.length > 0
+            ? (
+                teachersWithStats.reduce(
+                  (sum, t) => sum + t.statistics.complaintResolutionRate,
+                  0
+                ) / teachersWithStats.length
+              ).toFixed(1)
+            : "0",
       },
     });
   } catch (error) {

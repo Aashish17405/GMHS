@@ -11,13 +11,21 @@ import {
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Edit, Trash2, MoreVertical, User, Calendar } from "lucide-react";
+import {
+  Edit,
+  Trash2,
+  MoreVertical,
+  User,
+  Calendar,
+  Activity,
+} from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { ViewActionsModal } from "@/components/ViewActionsModal";
 
 interface Student {
   id: string;
@@ -44,6 +52,7 @@ interface StudentsTableProps {
   students: Student[];
   onEditStudent: (student: Student) => void;
   onDeleteStudent: (studentId: string) => void;
+  onAddAction?: (studentId: string) => void;
   loading?: boolean;
 }
 
@@ -51,6 +60,7 @@ export function StudentsTable({
   students,
   onEditStudent,
   onDeleteStudent,
+  onAddAction,
   loading = false,
 }: StudentsTableProps) {
   const formatDate = (dateString: string) => {
@@ -172,8 +182,16 @@ export function StudentsTable({
                   </div>
                 </TableCell>
                 <TableCell>
-                  <div className="text-sm text-gray-600">
-                    {getRecentActions(student.actions)}
+                  <div className="space-y-1">
+                    <div className="text-sm text-gray-600">
+                      {getRecentActions(student.actions)}
+                    </div>
+                    {student.actions && student.actions.length > 0 && (
+                      <ViewActionsModal
+                        studentId={student.id}
+                        studentName={student.name}
+                      />
+                    )}
                   </div>
                 </TableCell>
                 <TableCell>
@@ -193,6 +211,15 @@ export function StudentsTable({
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end" className="w-48">
+                      {onAddAction && (
+                        <DropdownMenuItem
+                          onClick={() => onAddAction(student.id)}
+                          className="cursor-pointer"
+                        >
+                          <Activity className="mr-2 h-4 w-4" />
+                          Add Action
+                        </DropdownMenuItem>
+                      )}
                       <DropdownMenuItem
                         onClick={() => onEditStudent(student)}
                         className="cursor-pointer"
