@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -10,7 +10,6 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
   Select,
@@ -60,16 +59,7 @@ export function AddActionModal({
     studentId: selectedStudentId || "",
   });
 
-  useEffect(() => {
-    if (open) {
-      fetchStudents();
-      if (selectedStudentId) {
-        setFormData((prev) => ({ ...prev, studentId: selectedStudentId }));
-      }
-    }
-  }, [open, selectedStudentId]);
-
-  const fetchStudents = async () => {
+  const fetchStudents = useCallback(async () => {
     setStudentsLoading(true);
     setError("");
     try {
@@ -81,7 +71,16 @@ export function AddActionModal({
     } finally {
       setStudentsLoading(false);
     }
-  };
+  }, [teacherId]);
+
+  useEffect(() => {
+    if (open) {
+      fetchStudents();
+      if (selectedStudentId) {
+        setFormData((prev) => ({ ...prev, studentId: selectedStudentId }));
+      }
+    }
+  }, [open, selectedStudentId, fetchStudents]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -113,13 +112,13 @@ export function AddActionModal({
         setOpen(false);
         onActionAdded();
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Error adding action:", error);
-      if (error.response?.data?.error) {
-        setError(error.response.data.error);
-      } else {
-        setError("Failed to add action. Please try again.");
-      }
+      const errorMessage =
+        error instanceof Error
+          ? error.message
+          : "Failed to add action. Please try again.";
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }

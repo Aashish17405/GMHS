@@ -83,22 +83,22 @@ export async function GET() {
       const assignedComplaints = teacher.complaintsAsTeacher;
       const totalAssigned = assignedComplaints.length;
       const resolved = assignedComplaints.filter(
-        (c: any) => c.status === "RESOLVED"
+        (c) => c.status === "RESOLVED"
       ).length;
       const pending = assignedComplaints.filter(
-        (c: any) => c.status === "PENDING"
+        (c) => c.status === "PENDING"
       ).length;
       const inProgress = assignedComplaints.filter(
-        (c: any) => c.status === "IN_PROGRESS"
+        (c) => c.status === "IN_PROGRESS"
       ).length;
 
       // Calculate average resolution time for resolved complaints
       const resolvedComplaints = assignedComplaints.filter(
-        (c: any) => c.status === "RESOLVED" && c.resolvedAt
+        (c) => c.status === "RESOLVED" && c.resolvedAt
       );
       const avgResolutionTime =
         resolvedComplaints.length > 0
-          ? resolvedComplaints.reduce((acc: number, complaint: any) => {
+          ? resolvedComplaints.reduce((acc: number, complaint) => {
               if (complaint.resolvedAt) {
                 const resolutionTime =
                   new Date(complaint.resolvedAt).getTime() -

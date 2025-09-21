@@ -141,8 +141,10 @@ export default function AdminDashboard() {
 
       setDashboardStats(statsResponse.data);
       setTeachersData(teachersResponse.data);
-    } catch (err: any) {
-      setError(err.response?.data?.error || "Failed to fetch dashboard data");
+    } catch (err: unknown) {
+      const errorMessage =
+        err instanceof Error ? err.message : "Failed to fetch dashboard data";
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -168,20 +170,22 @@ export default function AdminDashboard() {
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50">
       {/* Top Navigation Bar */}
       <div className="bg-white border-b border-gray-200 shadow-sm">
-        <div className="max-w-7xl mx-auto px-6 py-4">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4">
           <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-4">
+            <div className="flex items-center space-x-3 sm:space-x-4">
               <div className="flex items-center justify-center w-10 h-10 bg-[#1e3a8a] rounded-xl">
                 <Shield className="w-6 h-6 text-white" />
               </div>
-              <div>
-                <h1 className="text-xl font-semibold text-[#1e3a8a]">
+              <div className="min-w-0 flex-1">
+                <h1 className="text-lg sm:text-xl font-semibold text-[#1e3a8a] truncate">
                   Admin Portal
                 </h1>
-                <p className="text-sm text-gray-600">System Administration</p>
+                <p className="text-xs sm:text-sm text-gray-600 hidden sm:block">
+                  System Administration
+                </p>
               </div>
             </div>
-            <div className="flex items-center space-x-4">
+            <div className="flex items-center space-x-2 sm:space-x-4">
               <div className="hidden md:flex items-center space-x-2 bg-emerald-50 px-3 py-2 rounded-lg">
                 <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></div>
                 <span className="text-sm font-medium text-emerald-700">
@@ -192,25 +196,26 @@ export default function AdminDashboard() {
                 onClick={handleLogout}
                 variant="outline"
                 size="sm"
-                className="border-gray-300 hover:bg-red-50 hover:text-red-600 hover:border-red-300 transition-colors"
+                className="border-gray-300 hover:bg-red-50 hover:text-red-600 hover:border-red-300 transition-colors text-xs sm:text-sm"
               >
-                Sign Out
+                <span className="hidden sm:inline">Sign Out</span>
+                <span className="sm:hidden">Exit</span>
               </Button>
             </div>
           </div>
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-6 py-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4 sm:py-8">
         {/* Welcome Section */}
-        <div className="mb-8">
-          <div className="bg-gradient-to-r from-[#1e3a8a] to-[#3730a3] rounded-2xl p-8 text-white">
-            <div className="flex items-center justify-between">
-              <div>
-                <h2 className="text-2xl font-bold mb-2">
+        <div className="mb-6 sm:mb-8">
+          <div className="bg-gradient-to-r from-[#1e3a8a] to-[#3730a3] rounded-xl sm:rounded-2xl p-6 sm:p-8 text-white">
+            <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between space-y-4 lg:space-y-0">
+              <div className="min-w-0 flex-1">
+                <h2 className="text-xl sm:text-2xl font-bold mb-2">
                   Welcome, Administrator!
                 </h2>
-                <p className="text-white/90 text-lg">
+                <p className="text-white/90 text-sm sm:text-lg">
                   Monitor system performance and manage institutional operations
                 </p>
               </div>
@@ -234,25 +239,56 @@ export default function AdminDashboard() {
         )}
 
         {/* Tab Navigation */}
-        <div className="mb-6">
-          <div className="flex space-x-1 bg-white rounded-lg p-1 shadow-sm border border-gray-200">
+        <div className="mb-4 sm:mb-6">
+          <div className="flex flex-col sm:flex-row space-y-1 sm:space-y-0 sm:space-x-1 bg-white rounded-lg p-1 shadow-sm border border-gray-200">
             {[
-              { id: "overview", label: "System Overview", icon: BarChart3 },
-              { id: "teachers", label: "Teacher Management", icon: Users },
-              { id: "complaints", label: "Complaints", icon: MessageSquare },
-              { id: "analytics", label: "Analytics", icon: TrendingUp },
+              {
+                id: "overview",
+                label: "System Overview",
+                icon: BarChart3,
+                shortLabel: "Overview",
+              },
+              {
+                id: "teachers",
+                label: "Teacher Management",
+                icon: Users,
+                shortLabel: "Teachers",
+              },
+              {
+                id: "complaints",
+                label: "Complaints",
+                icon: MessageSquare,
+                shortLabel: "Complaints",
+              },
+              {
+                id: "analytics",
+                label: "Analytics",
+                icon: TrendingUp,
+                shortLabel: "Analytics",
+              },
             ].map((tab) => (
               <button
                 key={tab.id}
-                onClick={() => setActiveTab(tab.id as any)}
-                className={`flex items-center space-x-2 px-4 py-2 rounded-md transition-colors flex-1 justify-center ${
+                onClick={() =>
+                  setActiveTab(
+                    tab.id as
+                      | "overview"
+                      | "teachers"
+                      | "complaints"
+                      | "analytics"
+                  )
+                }
+                className={`flex items-center justify-center space-x-2 px-3 sm:px-4 py-2 rounded-md transition-colors flex-1 ${
                   activeTab === tab.id
                     ? "bg-[#1e3a8a] text-white"
                     : "text-gray-600 hover:bg-gray-100"
                 }`}
               >
                 <tab.icon className="h-4 w-4" />
-                <span className="font-medium">{tab.label}</span>
+                <span className="font-medium text-xs sm:text-sm">
+                  <span className="hidden sm:inline">{tab.label}</span>
+                  <span className="sm:hidden">{tab.shortLabel}</span>
+                </span>
               </button>
             ))}
           </div>
@@ -262,7 +298,7 @@ export default function AdminDashboard() {
         {activeTab === "overview" && dashboardStats && (
           <div className="space-y-6">
             {/* Key Metrics Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4 sm:gap-6">
               <Card className="bg-white shadow-sm border border-gray-200 hover:shadow-md transition-shadow">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                   <CardTitle className="text-sm font-medium text-gray-600">
@@ -363,35 +399,41 @@ export default function AdminDashboard() {
             </div>
 
             {/* System Health & Top Performers */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
               {/* System Health */}
               <Card className="bg-white shadow-sm border border-gray-200">
-                <CardHeader>
-                  <CardTitle className="text-xl font-semibold text-[#1e3a8a] flex items-center gap-2">
-                    <Settings className="h-5 w-5" />
+                <CardHeader className="pb-4">
+                  <CardTitle className="text-lg sm:text-xl font-semibold text-[#1e3a8a] flex items-center gap-2">
+                    <Settings className="h-4 w-4 sm:h-5 sm:w-5" />
                     System Health
                   </CardTitle>
-                  <CardDescription>Key performance indicators</CardDescription>
+                  <CardDescription className="text-sm">
+                    Key performance indicators
+                  </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  <div className="grid grid-cols-3 gap-4">
+                  <div className="grid grid-cols-3 gap-2 sm:gap-4">
                     <div className="text-center">
-                      <div className="text-2xl font-bold text-[#1e3a8a]">
+                      <div className="text-lg sm:text-2xl font-bold text-[#1e3a8a]">
                         {dashboardStats.userStats.byRole.ADMIN}
                       </div>
-                      <div className="text-sm text-gray-500">Admins</div>
+                      <div className="text-xs sm:text-sm text-gray-500">
+                        Admins
+                      </div>
                     </div>
                     <div className="text-center">
-                      <div className="text-2xl font-bold text-[#1e3a8a]">
+                      <div className="text-lg sm:text-2xl font-bold text-[#1e3a8a]">
                         {dashboardStats.userStats.byRole.PARENT}
                       </div>
-                      <div className="text-sm text-gray-500">Parents</div>
+                      <div className="text-xs sm:text-sm text-gray-500">
+                        Parents
+                      </div>
                     </div>
                     <div className="text-center">
-                      <div className="text-2xl font-bold text-[#1e3a8a]">
+                      <div className="text-lg sm:text-2xl font-bold text-[#1e3a8a]">
                         {dashboardStats.systemHealth.actionsPerStudent}
                       </div>
-                      <div className="text-sm text-gray-500">
+                      <div className="text-xs sm:text-sm text-gray-500">
                         Actions/Student
                       </div>
                     </div>
@@ -401,34 +443,40 @@ export default function AdminDashboard() {
 
               {/* Complaint Health */}
               <Card className="bg-white shadow-sm border border-gray-200">
-                <CardHeader>
-                  <CardTitle className="text-xl font-semibold text-[#1e3a8a] flex items-center gap-2">
-                    <MessageSquare className="h-5 w-5" />
+                <CardHeader className="pb-4">
+                  <CardTitle className="text-lg sm:text-xl font-semibold text-[#1e3a8a] flex items-center gap-2">
+                    <MessageSquare className="h-4 w-4 sm:h-5 sm:w-5" />
                     Complaint Health
                   </CardTitle>
-                  <CardDescription>
+                  <CardDescription className="text-sm">
                     Complaint management overview
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  <div className="grid grid-cols-3 gap-4">
+                  <div className="grid grid-cols-3 gap-2 sm:gap-4">
                     <div className="text-center">
-                      <div className="text-2xl font-bold text-red-600">
+                      <div className="text-lg sm:text-2xl font-bold text-red-600">
                         {dashboardStats.complaintStats.pending}
                       </div>
-                      <div className="text-sm text-gray-500">Pending</div>
+                      <div className="text-xs sm:text-sm text-gray-500">
+                        Pending
+                      </div>
                     </div>
                     <div className="text-center">
-                      <div className="text-2xl font-bold text-green-600">
+                      <div className="text-lg sm:text-2xl font-bold text-green-600">
                         {dashboardStats.complaintStats.resolved}
                       </div>
-                      <div className="text-sm text-gray-500">Resolved</div>
+                      <div className="text-xs sm:text-sm text-gray-500">
+                        Resolved
+                      </div>
                     </div>
                     <div className="text-center">
-                      <div className="text-2xl font-bold text-blue-600">
+                      <div className="text-lg sm:text-2xl font-bold text-blue-600">
                         {dashboardStats.complaintStats.recent}
                       </div>
-                      <div className="text-sm text-gray-500">Recent (7d)</div>
+                      <div className="text-xs sm:text-sm text-gray-500">
+                        Recent (7d)
+                      </div>
                     </div>
                   </div>
                 </CardContent>
@@ -482,67 +530,69 @@ export default function AdminDashboard() {
 
         {/* Teachers Tab */}
         {activeTab === "teachers" && teachersData && (
-          <div className="space-y-6">
+          <div className="space-y-4 sm:space-y-6">
             {/* Teachers Summary */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
               <Card className="bg-white shadow-sm border border-gray-200">
-                <CardContent className="p-6">
+                <CardContent className="p-4 sm:p-6">
                   <div className="flex items-center justify-between">
-                    <div>
-                      <div className="text-2xl font-bold text-[#1e3a8a]">
+                    <div className="min-w-0 flex-1">
+                      <div className="text-xl sm:text-2xl font-bold text-[#1e3a8a]">
                         {teachersData.summary.totalTeachers}
                       </div>
-                      <div className="text-sm text-gray-500">
+                      <div className="text-xs sm:text-sm text-gray-500">
                         Total Teachers
                       </div>
                     </div>
-                    <Users className="h-8 w-8 text-blue-600" />
+                    <Users className="h-6 w-6 sm:h-8 sm:w-8 text-blue-600 flex-shrink-0" />
                   </div>
                 </CardContent>
               </Card>
 
               <Card className="bg-white shadow-sm border border-gray-200">
-                <CardContent className="p-6">
+                <CardContent className="p-4 sm:p-6">
                   <div className="flex items-center justify-between">
-                    <div>
-                      <div className="text-2xl font-bold text-[#1e3a8a]">
+                    <div className="min-w-0 flex-1">
+                      <div className="text-xl sm:text-2xl font-bold text-[#1e3a8a]">
                         {teachersData.summary.totalStudents}
                       </div>
-                      <div className="text-sm text-gray-500">
+                      <div className="text-xs sm:text-sm text-gray-500">
                         Students Managed
                       </div>
                     </div>
-                    <GraduationCap className="h-8 w-8 text-green-600" />
+                    <GraduationCap className="h-6 w-6 sm:h-8 sm:w-8 text-green-600 flex-shrink-0" />
                   </div>
                 </CardContent>
               </Card>
 
               <Card className="bg-white shadow-sm border border-gray-200">
-                <CardContent className="p-6">
+                <CardContent className="p-4 sm:p-6">
                   <div className="flex items-center justify-between">
-                    <div>
-                      <div className="text-2xl font-bold text-[#1e3a8a]">
+                    <div className="min-w-0 flex-1">
+                      <div className="text-xl sm:text-2xl font-bold text-[#1e3a8a]">
                         {teachersData.summary.totalActions}
                       </div>
-                      <div className="text-sm text-gray-500">Total Actions</div>
+                      <div className="text-xs sm:text-sm text-gray-500">
+                        Total Actions
+                      </div>
                     </div>
-                    <Activity className="h-8 w-8 text-orange-600" />
+                    <Activity className="h-6 w-6 sm:h-8 sm:w-8 text-orange-600 flex-shrink-0" />
                   </div>
                 </CardContent>
               </Card>
 
               <Card className="bg-white shadow-sm border border-gray-200">
-                <CardContent className="p-6">
+                <CardContent className="p-4 sm:p-6">
                   <div className="flex items-center justify-between">
-                    <div>
-                      <div className="text-2xl font-bold text-[#1e3a8a]">
+                    <div className="min-w-0 flex-1">
+                      <div className="text-xl sm:text-2xl font-bold text-[#1e3a8a]">
                         {teachersData.summary.totalComplaints}
                       </div>
-                      <div className="text-sm text-gray-500">
+                      <div className="text-xs sm:text-sm text-gray-500">
                         Total Complaints
                       </div>
                     </div>
-                    <MessageSquare className="h-8 w-8 text-red-600" />
+                    <MessageSquare className="h-6 w-6 sm:h-8 sm:w-8 text-red-600 flex-shrink-0" />
                   </div>
                 </CardContent>
               </Card>
@@ -550,56 +600,56 @@ export default function AdminDashboard() {
 
             {/* Teachers List */}
             <Card className="bg-white shadow-sm border border-gray-200">
-              <CardHeader className="flex flex-row items-center justify-between">
-                <div>
-                  <CardTitle className="text-xl font-semibold text-[#1e3a8a] flex items-center gap-2">
-                    <Users className="h-5 w-5" />
+              <CardHeader className="flex flex-col sm:flex-row sm:items-center justify-between space-y-4 sm:space-y-0">
+                <div className="min-w-0 flex-1">
+                  <CardTitle className="text-lg sm:text-xl font-semibold text-[#1e3a8a] flex items-center gap-2">
+                    <Users className="h-4 w-4 sm:h-5 sm:w-5" />
                     Teacher Management
                   </CardTitle>
-                  <CardDescription>
+                  <CardDescription className="text-sm">
                     Monitor and manage teacher accounts
                   </CardDescription>
                 </div>
-                <Button className="bg-[#1e3a8a] hover:bg-[#1e40af] text-white">
+                <Button className="bg-[#1e3a8a] hover:bg-[#1e40af] text-white w-full sm:w-auto">
                   <Plus className="h-4 w-4 mr-2" />
                   Add Teacher
                 </Button>
               </CardHeader>
               <CardContent>
-                <div className="space-y-4">
+                <div className="space-y-3 sm:space-y-4">
                   {teachersData.teachers.map((teacher) => (
                     <div
                       key={teacher.id}
-                      className="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
+                      className="flex flex-col sm:flex-row sm:items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors space-y-4 sm:space-y-0"
                     >
-                      <div className="flex items-center space-x-4">
-                        <div className="h-12 w-12 rounded-full bg-[#1e3a8a] flex items-center justify-center">
-                          <span className="text-white font-medium text-lg">
+                      <div className="flex items-center space-x-3 sm:space-x-4 min-w-0 flex-1">
+                        <div className="h-10 w-10 sm:h-12 sm:w-12 rounded-full bg-[#1e3a8a] flex items-center justify-center flex-shrink-0">
+                          <span className="text-white font-medium text-sm sm:text-lg">
                             {teacher.name.charAt(0).toUpperCase()}
                           </span>
                         </div>
-                        <div>
-                          <div className="font-medium text-gray-900">
+                        <div className="min-w-0 flex-1">
+                          <div className="font-medium text-gray-900 truncate">
                             {teacher.name}
                           </div>
-                          <div className="text-sm text-gray-500">
+                          <div className="text-sm text-gray-500 truncate">
                             {teacher.email}
                           </div>
-                          <div className="flex items-center space-x-4 mt-1">
+                          <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-1">
                             <span className="text-xs text-gray-500">
                               {teacher.statistics.studentCount} students
                             </span>
                             <span className="text-xs text-gray-500">
                               {teacher.statistics.totalActions} actions
                             </span>
-                            <span className="text-xs text-gray-500">
+                            <span className="text-xs text-gray-500 hidden sm:inline">
                               {teacher.statistics.classCount} classes
                             </span>
                             <span className="text-xs text-gray-500">
                               {teacher.statistics.totalComplaints} complaints
                             </span>
                           </div>
-                          <div className="flex items-center space-x-2 mt-1">
+                          <div className="flex flex-wrap items-center gap-2 mt-2">
                             <Badge
                               variant="outline"
                               className={`text-xs ${
@@ -615,17 +665,17 @@ export default function AdminDashboard() {
                               resolved
                             </Badge>
                             {teacher.statistics.avgResolutionDays > 0 && (
-                              <span className="text-xs text-gray-500">
+                              <span className="text-xs text-gray-500 hidden sm:inline">
                                 {teacher.statistics.avgResolutionDays}d avg
                               </span>
                             )}
                           </div>
                         </div>
                       </div>
-                      <div className="flex items-center space-x-2">
+                      <div className="flex flex-wrap items-center gap-2 sm:space-x-2">
                         <Badge
                           variant="secondary"
-                          className={`${
+                          className={`text-xs ${
                             teacher.statistics.recentActivityCount > 0
                               ? "bg-green-100 text-green-800"
                               : "bg-gray-100 text-gray-600"
@@ -636,24 +686,26 @@ export default function AdminDashboard() {
                         {teacher.statistics.pendingComplaints > 0 && (
                           <Badge
                             variant="destructive"
-                            className="bg-red-100 text-red-800"
+                            className="bg-red-100 text-red-800 text-xs"
                           >
                             {teacher.statistics.pendingComplaints} pending
                           </Badge>
                         )}
-                        <Button variant="ghost" size="sm">
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="text-red-600 hover:text-red-700"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                        <Button variant="ghost" size="sm">
-                          <ChevronRight className="h-4 w-4" />
-                        </Button>
+                        <div className="flex items-center space-x-1 sm:space-x-2">
+                          <Button variant="ghost" size="sm" className="h-8 w-8">
+                            <Edit className="h-3 w-3 sm:h-4 sm:w-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="text-red-600 hover:text-red-700 h-8 w-8"
+                          >
+                            <Trash2 className="h-3 w-3 sm:h-4 sm:w-4" />
+                          </Button>
+                          <Button variant="ghost" size="sm" className="h-8 w-8">
+                            <ChevronRight className="h-3 w-3 sm:h-4 sm:w-4" />
+                          </Button>
+                        </div>
                       </div>
                     </div>
                   ))}
@@ -691,44 +743,42 @@ export default function AdminDashboard() {
                       Daily Activity (Last 7 Days)
                     </h4>
                     <div className="space-y-2">
-                      {dashboardStats.activityStats.dailyActivity.map(
-                        (day, index) => (
-                          <div
-                            key={day.date}
-                            className="flex items-center justify-between"
-                          >
-                            <span className="text-sm text-gray-600">
-                              {new Date(day.date).toLocaleDateString("en-US", {
-                                weekday: "short",
-                                month: "short",
-                                day: "numeric",
-                              })}
-                            </span>
-                            <div className="flex items-center space-x-2">
-                              <div className="w-32 bg-gray-200 rounded-full h-2">
-                                <div
-                                  className="bg-[#1e3a8a] h-2 rounded-full transition-all"
-                                  style={{
-                                    width: `${Math.max(
-                                      5,
-                                      (day.count /
-                                        Math.max(
-                                          ...dashboardStats.activityStats.dailyActivity.map(
-                                            (d) => d.count
-                                          )
-                                        )) *
-                                        100
-                                    )}%`,
-                                  }}
-                                ></div>
-                              </div>
-                              <span className="text-sm font-medium text-gray-900 w-8 text-right">
-                                {day.count}
-                              </span>
+                      {dashboardStats.activityStats.dailyActivity.map((day) => (
+                        <div
+                          key={day.date}
+                          className="flex items-center justify-between"
+                        >
+                          <span className="text-sm text-gray-600">
+                            {new Date(day.date).toLocaleDateString("en-US", {
+                              weekday: "short",
+                              month: "short",
+                              day: "numeric",
+                            })}
+                          </span>
+                          <div className="flex items-center space-x-2">
+                            <div className="w-32 bg-gray-200 rounded-full h-2">
+                              <div
+                                className="bg-[#1e3a8a] h-2 rounded-full transition-all"
+                                style={{
+                                  width: `${Math.max(
+                                    5,
+                                    (day.count /
+                                      Math.max(
+                                        ...dashboardStats.activityStats.dailyActivity.map(
+                                          (d) => d.count
+                                        )
+                                      )) *
+                                      100
+                                  )}%`,
+                                }}
+                              ></div>
                             </div>
+                            <span className="text-sm font-medium text-gray-900 w-8 text-right">
+                              {day.count}
+                            </span>
                           </div>
-                        )
-                      )}
+                        </div>
+                      ))}
                     </div>
                   </div>
 

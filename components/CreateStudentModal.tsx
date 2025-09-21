@@ -70,7 +70,7 @@ export function CreateStudentModal({
     setLoading(true);
 
     try {
-      const response = await axios.post("/api/students", {
+      await axios.post("/api/students", {
         ...formData,
         teacherId,
       });
@@ -78,10 +78,10 @@ export function CreateStudentModal({
       setFormData({ name: "", className: "", parentId: "" });
       setOpen(false);
       onStudentCreated();
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Error creating student:", error);
       const errorMessage =
-        error.response?.data?.error || "Failed to create student";
+        error instanceof Error ? error.message : "Failed to create student";
       console.error(errorMessage);
     } finally {
       setLoading(false);

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import {
   Dialog,
   DialogContent,
@@ -37,13 +37,7 @@ export function ViewActionsModal({
   const [actions, setActions] = useState<Action[]>([]);
   const [loading, setLoading] = useState(false);
 
-  useEffect(() => {
-    if (open) {
-      fetchActions();
-    }
-  }, [open, studentId]);
-
-  const fetchActions = async () => {
+  const fetchActions = useCallback(async () => {
     setLoading(true);
     try {
       const response = await axios.get(`/api/actions?studentId=${studentId}`);
@@ -53,7 +47,13 @@ export function ViewActionsModal({
     } finally {
       setLoading(false);
     }
-  };
+  }, [studentId]);
+
+  useEffect(() => {
+    if (open) {
+      fetchActions();
+    }
+  }, [open, fetchActions]);
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString("en-US", {

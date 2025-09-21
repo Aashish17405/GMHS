@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import {
   Card,
   CardContent,
@@ -16,13 +16,7 @@ import { AddActionModal } from "@/components/AddActionModal";
 import { ComplaintsTable } from "@/components/ComplaintsTable";
 import { RespondToComplaintModal } from "@/components/RespondToComplaintModal";
 import { ViewComplaintModal } from "@/components/ViewComplaintModal";
-import {
-  Users,
-  GraduationCap,
-  Activity,
-  TrendingUp,
-  MessageSquare,
-} from "lucide-react";
+import { Users, GraduationCap, Activity, MessageSquare } from "lucide-react";
 import axios from "axios";
 
 interface Student {
@@ -97,14 +91,7 @@ export default function TeacherDashboardPage() {
     setTeacherId(storedTeacherId || "teacher-id-placeholder");
   }, []);
 
-  useEffect(() => {
-    if (teacherId) {
-      fetchStudents();
-      fetchComplaints();
-    }
-  }, [teacherId]);
-
-  const fetchStudents = async () => {
+  const fetchStudents = useCallback(async () => {
     if (!teacherId) return;
 
     setLoading(true);
@@ -116,9 +103,9 @@ export default function TeacherDashboardPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [teacherId]);
 
-  const fetchComplaints = async () => {
+  const fetchComplaints = useCallback(async () => {
     if (!teacherId) return;
 
     setComplaintsLoading(true);
@@ -132,7 +119,14 @@ export default function TeacherDashboardPage() {
     } finally {
       setComplaintsLoading(false);
     }
-  };
+  }, [teacherId]);
+
+  useEffect(() => {
+    if (teacherId) {
+      fetchStudents();
+      fetchComplaints();
+    }
+  }, [teacherId, fetchStudents, fetchComplaints]);
 
   const handleEditStudent = (student: Student) => {
     setEditStudent(student);
@@ -240,20 +234,20 @@ export default function TeacherDashboardPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50 p-6">
-      <div className="max-w-7xl mx-auto space-y-6">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50 p-3 sm:p-6">
+      <div className="max-w-7xl mx-auto space-y-4 sm:space-y-6">
         {/* Header */}
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-          <div className="flex items-center justify-between">
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 sm:p-6">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
-              <h1 className="text-3xl font-bold text-[#1e3a8a] mb-2">
+              <h1 className="text-2xl sm:text-3xl font-bold text-[#1e3a8a] mb-2">
                 Teacher Dashboard
               </h1>
-              <p className="text-gray-600">
+              <p className="text-sm sm:text-base text-gray-600">
                 Manage your students and track their progress
               </p>
             </div>
-            <div className="flex gap-3">
+            <div className="flex flex-col sm:flex-row gap-3">
               <AddActionModal
                 teacherId={teacherId || ""}
                 onActionAdded={fetchStudents}
@@ -267,22 +261,26 @@ export default function TeacherDashboardPage() {
         </div>
 
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
           {stats.map((stat, index) => (
             <Card
               key={index}
               className="bg-white shadow-sm border border-gray-200 hover:shadow-md transition-shadow"
             >
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium text-gray-600">
+                <CardTitle className="text-xs sm:text-sm font-medium text-gray-600">
                   {stat.title}
                 </CardTitle>
-                <div className={`p-2 rounded-full ${stat.bgColor}`}>
-                  <stat.icon className={`h-4 w-4 ${stat.color}`} />
+                <div
+                  className={`p-2 rounded-full ${stat.bgColor} flex-shrink-0`}
+                >
+                  <stat.icon
+                    className={`h-3 w-3 sm:h-4 sm:w-4 ${stat.color}`}
+                  />
                 </div>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-[#1e3a8a] mb-1">
+                <div className="text-xl sm:text-2xl font-bold text-[#1e3a8a] mb-1">
                   {stat.value}
                 </div>
                 <p className="text-xs text-gray-500">{stat.description}</p>
@@ -293,17 +291,17 @@ export default function TeacherDashboardPage() {
 
         {/* Students Table */}
         <Card className="bg-white shadow-sm border border-gray-200">
-          <CardHeader>
-            <CardTitle className="text-xl font-semibold text-[#1e3a8a] flex items-center gap-2">
-              <Users className="h-5 w-5" />
+          <CardHeader className="p-4 sm:p-6">
+            <CardTitle className="text-lg sm:text-xl font-semibold text-[#1e3a8a] flex items-center gap-2">
+              <Users className="h-4 w-4 sm:h-5 sm:w-5" />
               Students
             </CardTitle>
-            <CardDescription>
+            <CardDescription className="text-sm">
               Manage your students, view their information, and track their
               progress
             </CardDescription>
           </CardHeader>
-          <CardContent>
+          <CardContent className="p-4 sm:p-6">
             <StudentsTable
               students={students}
               onEditStudent={handleEditStudent}
@@ -317,23 +315,25 @@ export default function TeacherDashboardPage() {
         {/* Recent Actions */}
         {!loading && students.length > 0 && (
           <Card className="bg-white shadow-sm border border-gray-200">
-            <CardHeader>
-              <CardTitle className="text-xl font-semibold text-[#1e3a8a] flex items-center gap-2">
-                <Activity className="h-5 w-5" />
+            <CardHeader className="p-4 sm:p-6">
+              <CardTitle className="text-lg sm:text-xl font-semibold text-[#1e3a8a] flex items-center gap-2">
+                <Activity className="h-4 w-4 sm:h-5 sm:w-5" />
                 Recent Actions
               </CardTitle>
-              <CardDescription>
+              <CardDescription className="text-sm">
                 Latest actions recorded across all your students
               </CardDescription>
             </CardHeader>
-            <CardContent>
+            <CardContent className="p-4 sm:p-6">
               {getRecentActions().length === 0 ? (
                 <div className="text-center py-8 text-gray-500">
                   <Activity className="mx-auto h-8 w-8 mb-3 text-gray-400" />
-                  <p>No recent actions recorded yet.</p>
-                  <p className="text-sm">
-                    Use the "Add Action" button to start tracking student
-                    interactions.
+                  <p className="text-sm sm:text-base">
+                    No recent actions recorded yet.
+                  </p>
+                  <p className="text-xs sm:text-sm">
+                    Use the &quot;Add Action&quot; button to start tracking
+                    student interactions.
                   </p>
                 </div>
               ) : (
@@ -341,14 +341,14 @@ export default function TeacherDashboardPage() {
                   {getRecentActions().map((action) => (
                     <div
                       key={action.id}
-                      className="flex items-start justify-between p-3 bg-gray-50 rounded-lg border border-gray-100"
+                      className="flex flex-col sm:flex-row sm:items-start justify-between p-3 bg-gray-50 rounded-lg border border-gray-100 gap-2 sm:gap-0"
                     >
                       <div className="flex-1">
-                        <div className="flex items-center gap-2 mb-1">
-                          <span className="font-medium text-gray-900">
+                        <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2 mb-1">
+                          <span className="font-medium text-gray-900 text-sm sm:text-base">
                             {action.studentName}
                           </span>
-                          <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">
+                          <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded self-start">
                             {action.studentClass}
                           </span>
                         </div>
@@ -377,17 +377,17 @@ export default function TeacherDashboardPage() {
 
         {/* Complaints Section */}
         <Card className="bg-white shadow-sm border border-gray-200">
-          <CardHeader>
-            <CardTitle className="text-xl font-semibold text-[#1e3a8a] flex items-center gap-2">
-              <MessageSquare className="h-5 w-5" />
+          <CardHeader className="p-4 sm:p-6">
+            <CardTitle className="text-lg sm:text-xl font-semibold text-[#1e3a8a] flex items-center gap-2">
+              <MessageSquare className="h-4 w-4 sm:h-5 sm:w-5" />
               Parent Complaints
             </CardTitle>
-            <CardDescription>
+            <CardDescription className="text-sm">
               Complaints submitted by parents that require your attention and
               response
             </CardDescription>
           </CardHeader>
-          <CardContent>
+          <CardContent className="p-4 sm:p-6">
             <ComplaintsTable
               complaints={complaints}
               onRespondToComplaint={handleRespondToComplaint}

@@ -190,8 +190,8 @@ export function AdminComplaintsTable() {
 
   if (loading) {
     return (
-      <div className="space-y-6">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div className="space-y-4 sm:space-y-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           {[...Array(4)].map((_, i) => (
             <Card key={i} className="animate-pulse">
               <CardHeader className="pb-2">
@@ -232,18 +232,20 @@ export function AdminComplaintsTable() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       {/* Statistics Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
+            <CardTitle className="text-xs sm:text-sm font-medium">
               Total Complaints
             </CardTitle>
-            <MessageSquare className="h-4 w-4 text-muted-foreground" />
+            <MessageSquare className="h-4 w-4 text-muted-foreground flex-shrink-0" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{data.statistics.total}</div>
+            <div className="text-xl sm:text-2xl font-bold">
+              {data.statistics.total}
+            </div>
             <p className="text-xs text-muted-foreground">
               {data.statistics.dailyTrends.slice(-1)[0]?.count || 0} today
             </p>
@@ -252,13 +254,13 @@ export function AdminComplaintsTable() {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
+            <CardTitle className="text-xs sm:text-sm font-medium">
               Resolution Rate
             </CardTitle>
-            <Target className="h-4 w-4 text-muted-foreground" />
+            <Target className="h-4 w-4 text-muted-foreground flex-shrink-0" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">
+            <div className="text-xl sm:text-2xl font-bold">
               {data.statistics.resolutionRate}%
             </div>
             <p className="text-xs text-muted-foreground">
@@ -269,13 +271,13 @@ export function AdminComplaintsTable() {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
+            <CardTitle className="text-xs sm:text-sm font-medium">
               Avg Response Time
             </CardTitle>
-            <Clock className="h-4 w-4 text-muted-foreground" />
+            <Clock className="h-4 w-4 text-muted-foreground flex-shrink-0" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">
+            <div className="text-xl sm:text-2xl font-bold">
               {data.statistics.avgResponseTimeHours}h
             </div>
             <p className="text-xs text-muted-foreground">
@@ -286,13 +288,13 @@ export function AdminComplaintsTable() {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
+            <CardTitle className="text-xs sm:text-sm font-medium">
               Active Teachers
             </CardTitle>
-            <Users className="h-4 w-4 text-muted-foreground" />
+            <Users className="h-4 w-4 text-muted-foreground flex-shrink-0" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">
+            <div className="text-xl sm:text-2xl font-bold">
               {
                 data.teacherPerformance.filter((t) => t.totalComplaints > 0)
                   .length
@@ -309,7 +311,7 @@ export function AdminComplaintsTable() {
           <CardTitle>Teacher Performance Summary</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="space-y-4">
+          <div className="space-y-3 sm:space-y-4">
             {data.teacherPerformance
               .filter((teacher) => teacher.totalComplaints > 0)
               .sort((a, b) => b.resolutionRate - a.resolutionRate)
@@ -317,17 +319,19 @@ export function AdminComplaintsTable() {
               .map((teacher) => (
                 <div
                   key={teacher.id}
-                  className="flex items-center justify-between p-4 border rounded-lg"
+                  className="flex flex-col sm:flex-row sm:items-center justify-between p-3 sm:p-4 border rounded-lg space-y-3 sm:space-y-0"
                 >
-                  <div className="flex items-center space-x-3">
+                  <div className="flex items-center space-x-3 min-w-0 flex-1">
                     {getPerformanceIndicator(teacher.resolutionRate)}
-                    <div>
-                      <p className="font-medium">{teacher.name}</p>
-                      <p className="text-sm text-gray-500">{teacher.email}</p>
+                    <div className="min-w-0 flex-1">
+                      <p className="font-medium truncate">{teacher.name}</p>
+                      <p className="text-sm text-gray-500 truncate">
+                        {teacher.email}
+                      </p>
                     </div>
                   </div>
-                  <div className="text-right space-y-1">
-                    <div className="flex items-center space-x-4">
+                  <div className="text-left sm:text-right space-y-1">
+                    <div className="flex flex-col sm:flex-row sm:items-center space-y-1 sm:space-y-0 sm:space-x-4">
                       <span className="text-sm text-gray-500">
                         {teacher.totalComplaints} complaints
                       </span>
@@ -339,6 +343,7 @@ export function AdminComplaintsTable() {
                             ? "secondary"
                             : "destructive"
                         }
+                        className="w-fit"
                       >
                         {teacher.resolutionRate}% resolved
                       </Badge>
@@ -356,10 +361,10 @@ export function AdminComplaintsTable() {
       {/* Filters */}
       <Card>
         <CardHeader>
-          <CardTitle>All Complaints</CardTitle>
-          <div className="flex gap-4 flex-wrap">
+          <CardTitle className="text-lg sm:text-xl">All Complaints</CardTitle>
+          <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
             <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="w-40">
+              <SelectTrigger className="w-full sm:w-40">
                 <SelectValue placeholder="Filter by status" />
               </SelectTrigger>
               <SelectContent>
@@ -371,7 +376,7 @@ export function AdminComplaintsTable() {
             </Select>
 
             <Select value={typeFilter} onValueChange={setTypeFilter}>
-              <SelectTrigger className="w-40">
+              <SelectTrigger className="w-full sm:w-40">
                 <SelectValue placeholder="Filter by type" />
               </SelectTrigger>
               <SelectContent>
@@ -386,7 +391,7 @@ export function AdminComplaintsTable() {
             </Select>
 
             <Select value={teacherFilter} onValueChange={setTeacherFilter}>
-              <SelectTrigger className="w-48">
+              <SelectTrigger className="w-full sm:w-48">
                 <SelectValue placeholder="Filter by teacher" />
               </SelectTrigger>
               <SelectContent>
@@ -401,63 +406,148 @@ export function AdminComplaintsTable() {
           </div>
         </CardHeader>
         <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Student</TableHead>
-                <TableHead>Parent</TableHead>
-                <TableHead>Teacher</TableHead>
-                <TableHead>Type</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Created</TableHead>
-                <TableHead>Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredComplaints.length > 0 ? (
-                filteredComplaints.map((complaint) => (
-                  <TableRow key={complaint.id}>
-                    <TableCell>
+          {/* Desktop Table View */}
+          <div className="hidden md:block">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Student</TableHead>
+                  <TableHead>Parent</TableHead>
+                  <TableHead>Teacher</TableHead>
+                  <TableHead>Type</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Created</TableHead>
+                  <TableHead>Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filteredComplaints.length > 0 ? (
+                  filteredComplaints.map((complaint) => (
+                    <TableRow key={complaint.id}>
+                      <TableCell>
+                        <div>
+                          <p className="font-medium">
+                            {complaint.student.name}
+                          </p>
+                          <p className="text-sm text-gray-500">
+                            {complaint.student.className}
+                          </p>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div>
+                          <p className="font-medium">{complaint.parent.name}</p>
+                          <p className="text-sm text-gray-500">
+                            {complaint.parent.email}
+                          </p>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        {complaint.teacher ? (
+                          <div>
+                            <p className="font-medium">
+                              {complaint.teacher.name}
+                            </p>
+                            <p className="text-sm text-gray-500">
+                              {complaint.teacher.email}
+                            </p>
+                          </div>
+                        ) : (
+                          <span className="text-gray-500">Unassigned</span>
+                        )}
+                      </TableCell>
+                      <TableCell>{getTypeBadge(complaint.type)}</TableCell>
+                      <TableCell>{getStatusBadge(complaint.status)}</TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-1">
+                          <Calendar className="h-3 w-3 text-gray-500" />
+                          <span className="text-sm">
+                            {new Date(complaint.createdAt).toLocaleDateString()}
+                          </span>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleViewComplaint(complaint)}
+                          className="h-8"
+                        >
+                          <Eye className="h-4 w-4" />
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                ) : (
+                  <TableRow>
+                    <TableCell colSpan={7} className="text-center py-8">
+                      <div className="text-gray-500">
+                        <MessageSquare className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                        <p>No complaints found with the selected filters</p>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+          </div>
+
+          {/* Mobile Card View */}
+          <div className="md:hidden space-y-4">
+            {filteredComplaints.length > 0 ? (
+              filteredComplaints.map((complaint) => (
+                <Card key={complaint.id} className="p-4">
+                  <div className="space-y-3">
+                    <div className="flex justify-between items-start">
                       <div>
-                        <p className="font-medium">{complaint.student.name}</p>
+                        <h4 className="font-semibold">
+                          {complaint.student.name}
+                        </h4>
                         <p className="text-sm text-gray-500">
                           {complaint.student.className}
                         </p>
                       </div>
-                    </TableCell>
-                    <TableCell>
+                      <div className="flex flex-col gap-1">
+                        {getStatusBadge(complaint.status)}
+                        {getTypeBadge(complaint.type)}
+                      </div>
+                    </div>
+
+                    <div className="space-y-2">
                       <div>
-                        <p className="font-medium">{complaint.parent.name}</p>
-                        <p className="text-sm text-gray-500">
+                        <p className="text-sm font-medium text-gray-700">
+                          Parent
+                        </p>
+                        <p className="text-sm">{complaint.parent.name}</p>
+                        <p className="text-xs text-gray-500">
                           {complaint.parent.email}
                         </p>
                       </div>
-                    </TableCell>
-                    <TableCell>
-                      {complaint.teacher ? (
-                        <div>
-                          <p className="font-medium">
-                            {complaint.teacher.name}
-                          </p>
-                          <p className="text-sm text-gray-500">
-                            {complaint.teacher.email}
-                          </p>
-                        </div>
-                      ) : (
-                        <span className="text-gray-500">Unassigned</span>
-                      )}
-                    </TableCell>
-                    <TableCell>{getTypeBadge(complaint.type)}</TableCell>
-                    <TableCell>{getStatusBadge(complaint.status)}</TableCell>
-                    <TableCell>
+
+                      <div>
+                        <p className="text-sm font-medium text-gray-700">
+                          Teacher
+                        </p>
+                        {complaint.teacher ? (
+                          <div>
+                            <p className="text-sm">{complaint.teacher.name}</p>
+                            <p className="text-xs text-gray-500">
+                              {complaint.teacher.email}
+                            </p>
+                          </div>
+                        ) : (
+                          <p className="text-sm text-gray-500">Unassigned</p>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="flex justify-between items-center pt-2 border-t">
                       <div className="flex items-center gap-1">
                         <Calendar className="h-3 w-3 text-gray-500" />
-                        <span className="text-sm">
+                        <span className="text-xs text-gray-500">
                           {new Date(complaint.createdAt).toLocaleDateString()}
                         </span>
                       </div>
-                    </TableCell>
-                    <TableCell>
                       <Button
                         variant="ghost"
                         size="sm"
@@ -466,21 +556,19 @@ export function AdminComplaintsTable() {
                       >
                         <Eye className="h-4 w-4" />
                       </Button>
-                    </TableCell>
-                  </TableRow>
-                ))
-              ) : (
-                <TableRow>
-                  <TableCell colSpan={7} className="text-center py-8">
-                    <div className="text-gray-500">
-                      <MessageSquare className="h-8 w-8 mx-auto mb-2 opacity-50" />
-                      <p>No complaints found with the selected filters</p>
                     </div>
-                  </TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
+                  </div>
+                </Card>
+              ))
+            ) : (
+              <div className="text-center py-8">
+                <div className="text-gray-500">
+                  <MessageSquare className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                  <p>No complaints found with the selected filters</p>
+                </div>
+              </div>
+            )}
+          </div>
         </CardContent>
       </Card>
 

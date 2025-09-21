@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -62,16 +62,7 @@ export function SubmitComplaintModal({
     studentId: selectedStudentId || "",
   });
 
-  useEffect(() => {
-    if (open) {
-      fetchStudents();
-      if (selectedStudentId) {
-        setFormData((prev) => ({ ...prev, studentId: selectedStudentId }));
-      }
-    }
-  }, [open, selectedStudentId]);
-
-  const fetchStudents = async () => {
+  const fetchStudents = useCallback(async () => {
     setStudentsLoading(true);
     setError("");
     try {
@@ -84,7 +75,16 @@ export function SubmitComplaintModal({
     } finally {
       setStudentsLoading(false);
     }
-  };
+  }, [parentId]);
+
+  useEffect(() => {
+    if (open) {
+      fetchStudents();
+      if (selectedStudentId) {
+        setFormData((prev) => ({ ...prev, studentId: selectedStudentId }));
+      }
+    }
+  }, [open, selectedStudentId, fetchStudents]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -130,13 +130,13 @@ export function SubmitComplaintModal({
         setOpen(false);
         onComplaintSubmitted();
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Error submitting complaint:", error);
-      if (error.response?.data?.error) {
-        setError(error.response.data.error);
-      } else {
-        setError("Failed to submit complaint. Please try again.");
-      }
+      const errorMessage =
+        error instanceof Error
+          ? error.message
+          : "Failed to submit complaint. Please try again.";
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -176,9 +176,9 @@ export function SubmitComplaintModal({
             Submit Complaint
           </DialogTitle>
           <DialogDescription className="text-gray-600">
-            Submit a complaint about your child's performance or any concerns
-            you have. This will be sent to your child's teacher for review and
-            action.
+            Submit a complaint about your child&apos;s performance or any
+            concerns you have. This will be sent to your child&apos;s teacher
+            for review and action.
           </DialogDescription>
         </DialogHeader>
 

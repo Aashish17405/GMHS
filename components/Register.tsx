@@ -79,11 +79,12 @@ export default function Register({
 
       console.log("Success:", data);
       setLoginMode(true);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Error:", error);
       const errorMessage =
-        error.response?.data?.message ||
-        "Registration failed. Please try again.";
+        error instanceof Error
+          ? error.message
+          : "Registration failed. Please try again.";
       setError(errorMessage);
     } finally {
       setIsLoading(false);

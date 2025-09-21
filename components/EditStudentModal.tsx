@@ -90,14 +90,14 @@ export function EditStudentModal({
     setLoading(true);
 
     try {
-      const response = await axios.put(`/api/students/${student.id}`, formData);
+      await axios.put(`/api/students/${student.id}`, formData);
 
       onOpenChange(false);
       onStudentUpdated();
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Error updating student:", error);
       const errorMessage =
-        error.response?.data?.error || "Failed to update student";
+        error instanceof Error ? error.message : "Failed to update student";
       console.error(errorMessage);
     } finally {
       setLoading(false);
@@ -115,7 +115,7 @@ export function EditStudentModal({
           </DialogTitle>
           <DialogDescription className="text-gray-600">
             Update the student information. Make changes and click save when
-            you're done.
+            you&apos;re done.
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="grid gap-6 py-4">

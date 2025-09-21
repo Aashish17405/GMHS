@@ -40,7 +40,8 @@ export async function POST(request: Request) {
     }
 
     // Don't return password in response
-    const { password: _, ...userWithoutPassword } = user;
+    const { password: _password, ...userWithoutPassword } = user;
+    console.log("User authenticated:", userWithoutPassword.email, _password);
 
     return new Response(
       JSON.stringify({

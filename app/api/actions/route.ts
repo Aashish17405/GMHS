@@ -6,7 +6,7 @@ export async function GET(request: Request) {
   const studentId = url.searchParams.get("studentId");
 
   try {
-    const where: any = {};
+    const where: { teacherId?: string; studentId?: string } = {};
     if (teacherId) where.teacherId = teacherId;
     if (studentId) where.studentId = studentId;
 

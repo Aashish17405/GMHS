@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useState } from "react";
-import { useRouter } from "next/navigation";
 import Register from "@/components/Register";
 import Login from "@/components/Login";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";

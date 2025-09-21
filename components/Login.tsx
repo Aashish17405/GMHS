@@ -49,10 +49,12 @@ export default function Login({
         router.push("/dashboard/parent");
       }
       localStorage.setItem("id", data.id);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Error:", error);
       const errorMessage =
-        error.response?.data?.message || "Login failed. Please try again.";
+        error instanceof Error
+          ? error.message
+          : "Login failed. Please try again.";
       setError(errorMessage);
     } finally {
       setIsLoading(false);

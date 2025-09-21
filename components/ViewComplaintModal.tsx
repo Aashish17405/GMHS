@@ -1,6 +1,5 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -216,7 +215,7 @@ export function ViewComplaintModal({
           {complaint.resolution && (
             <div>
               <h3 className="font-semibold text-gray-900 mb-2">
-                Teacher's Resolution
+                Teacher&apos;s Resolution
               </h3>
               <div className="bg-green-50 rounded-lg p-4 border border-green-200">
                 <p className="text-gray-900 leading-relaxed whitespace-pre-wrap">

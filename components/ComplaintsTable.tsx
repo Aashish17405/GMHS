@@ -1,6 +1,5 @@
 "use client";
 
-import { useState } from "react";
 import {
   Table,
   TableBody,
@@ -11,14 +10,7 @@ import {
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import {
-  MessageSquare,
-  Calendar,
-  User,
-  Eye,
-  Clock,
-  CheckCircle,
-} from "lucide-react";
+import { MessageSquare, Calendar, Eye, Clock, CheckCircle } from "lucide-react";
 
 interface Complaint {
   id: string;

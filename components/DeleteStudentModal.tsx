@@ -35,14 +35,14 @@ export function DeleteStudentModal({
     setLoading(true);
 
     try {
-      const response = await axios.delete(`/api/students/${studentId}`);
+      await axios.delete(`/api/students/${studentId}`);
 
       onOpenChange(false);
       onStudentDeleted();
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Error deleting student:", error);
       const errorMessage =
-        error.response?.data?.error || "Failed to delete student";
+        error instanceof Error ? error.message : "Failed to delete student";
       console.error(errorMessage);
     } finally {
       setLoading(false);

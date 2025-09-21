@@ -117,13 +117,13 @@ export function RespondToComplaintModal({
         onOpenChange(false);
         onComplaintUpdated();
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Error updating complaint:", error);
-      if (error.response?.data?.error) {
-        setError(error.response.data.error);
-      } else {
-        setError("Failed to update complaint. Please try again.");
-      }
+      const errorMessage =
+        error instanceof Error
+          ? error.message
+          : "Failed to update complaint. Please try again.";
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }

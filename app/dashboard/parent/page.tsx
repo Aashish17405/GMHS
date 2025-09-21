@@ -1,7 +1,7 @@
 "use client";
 
 import axios from "axios";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import {
   Card,
   CardContent,
@@ -90,14 +90,7 @@ export default function ParentDashboard() {
     setParentId(storedParentId);
   }, []);
 
-  useEffect(() => {
-    if (parentId) {
-      fetchData();
-      fetchComplaints();
-    }
-  }, [parentId]);
-
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     if (!parentId) return;
 
     try {
@@ -106,28 +99,35 @@ export default function ParentDashboard() {
       const response = await axios.get(`/api/child?parentId=${parentId}`);
       setData(response.data);
       console.log(response.data);
-    } catch (err: any) {
-      setError(
-        err.response?.data?.error || err.message || "Failed to fetch data"
-      );
+    } catch (err: unknown) {
+      const errorMessage =
+        err instanceof Error ? err.message : "Failed to fetch data";
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }
-  };
+  }, [parentId]);
 
-  const fetchComplaints = async () => {
+  const fetchComplaints = useCallback(async () => {
     if (!parentId) return;
 
     try {
       setComplaintsLoading(true);
       const response = await axios.get(`/api/complaints?parentId=${parentId}`);
       setComplaints(response.data.complaints || []);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Error fetching complaints:", err);
     } finally {
       setComplaintsLoading(false);
     }
-  };
+  }, [parentId]);
+
+  useEffect(() => {
+    if (parentId) {
+      fetchData();
+      fetchComplaints();
+    }
+  }, [parentId, fetchData, fetchComplaints]);
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString("en-US", {
@@ -209,27 +209,27 @@ export default function ParentDashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50 p-6">
-      <div className="max-w-7xl mx-auto space-y-6">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50 p-3 sm:p-6">
+      <div className="max-w-7xl mx-auto space-y-4 sm:space-y-6">
         {/* Header */}
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-          <div className="flex items-center justify-between">
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 sm:p-6">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
-              <h1 className="text-3xl font-bold text-[#1e3a8a] mb-2">
+              <h1 className="text-2xl sm:text-3xl font-bold text-[#1e3a8a] mb-2">
                 Parent Dashboard
               </h1>
-              <p className="text-gray-600">
-                Monitor your children's progress and activities
+              <p className="text-sm sm:text-base text-gray-600">
+                Monitor your children&apos;s progress and activities
               </p>
             </div>
-            <div className="flex items-center gap-4">
+            <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
               <SubmitComplaintModal
                 parentId={parentId || ""}
                 onComplaintSubmitted={fetchComplaints}
               />
               <div className="flex items-center space-x-2 text-[#1e3a8a]">
-                <Users className="h-6 w-6" />
-                <span className="text-sm font-medium">
+                <Users className="h-4 w-4 sm:h-6 sm:w-6" />
+                <span className="text-xs sm:text-sm font-medium">
                   {data?.students?.length || 0} Child
                   {data?.students?.length !== 1 ? "ren" : ""}
                 </span>
@@ -250,18 +250,18 @@ export default function ParentDashboard() {
 
         {/* Stats Cards */}
         {data?.students && (
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
             <Card className="bg-white shadow-sm border border-gray-200 hover:shadow-md transition-shadow">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium text-gray-600">
+                <CardTitle className="text-xs sm:text-sm font-medium text-gray-600">
                   Total Children
                 </CardTitle>
-                <div className="p-2 rounded-full bg-blue-100">
-                  <Users className="h-4 w-4 text-blue-600" />
+                <div className="p-2 rounded-full bg-blue-100 flex-shrink-0">
+                  <Users className="h-3 w-3 sm:h-4 sm:w-4 text-blue-600" />
                 </div>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-[#1e3a8a] mb-1">
+                <div className="text-xl sm:text-2xl font-bold text-[#1e3a8a] mb-1">
                   {data.students.length}
                 </div>
                 <p className="text-xs text-gray-500">Enrolled in school</p>
@@ -270,15 +270,15 @@ export default function ParentDashboard() {
 
             <Card className="bg-white shadow-sm border border-gray-200 hover:shadow-md transition-shadow">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium text-gray-600">
+                <CardTitle className="text-xs sm:text-sm font-medium text-gray-600">
                   Total Activities
                 </CardTitle>
-                <div className="p-2 rounded-full bg-green-100">
-                  <Activity className="h-4 w-4 text-green-600" />
+                <div className="p-2 rounded-full bg-green-100 flex-shrink-0">
+                  <Activity className="h-3 w-3 sm:h-4 sm:w-4 text-green-600" />
                 </div>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-[#1e3a8a] mb-1">
+                <div className="text-xl sm:text-2xl font-bold text-[#1e3a8a] mb-1">
                   {getTotalActions()}
                 </div>
                 <p className="text-xs text-gray-500">Recorded actions</p>
@@ -287,15 +287,15 @@ export default function ParentDashboard() {
 
             <Card className="bg-white shadow-sm border border-gray-200 hover:shadow-md transition-shadow">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium text-gray-600">
+                <CardTitle className="text-xs sm:text-sm font-medium text-gray-600">
                   My Complaints
                 </CardTitle>
-                <div className="p-2 rounded-full bg-orange-100">
-                  <MessageSquare className="h-4 w-4 text-orange-600" />
+                <div className="p-2 rounded-full bg-orange-100 flex-shrink-0">
+                  <MessageSquare className="h-3 w-3 sm:h-4 sm:w-4 text-orange-600" />
                 </div>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-[#1e3a8a] mb-1">
+                <div className="text-xl sm:text-2xl font-bold text-[#1e3a8a] mb-1">
                   {complaints.length}
                 </div>
                 <p className="text-xs text-gray-500">Total submitted</p>
@@ -304,15 +304,15 @@ export default function ParentDashboard() {
 
             <Card className="bg-white shadow-sm border border-gray-200 hover:shadow-md transition-shadow">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium text-gray-600">
+                <CardTitle className="text-xs sm:text-sm font-medium text-gray-600">
                   Pending Issues
                 </CardTitle>
-                <div className="p-2 rounded-full bg-red-100">
-                  <AlertTriangle className="h-4 w-4 text-red-600" />
+                <div className="p-2 rounded-full bg-red-100 flex-shrink-0">
+                  <AlertTriangle className="h-3 w-3 sm:h-4 sm:w-4 text-red-600" />
                 </div>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-[#1e3a8a] mb-1">
+                <div className="text-xl sm:text-2xl font-bold text-[#1e3a8a] mb-1">
                   {getPendingComplaints()}
                 </div>
                 <p className="text-xs text-gray-500">Awaiting response</p>
@@ -323,71 +323,73 @@ export default function ParentDashboard() {
 
         {/* Children Cards */}
         {data?.students && data.students.length > 0 ? (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
             {data.students.map((student) => (
               <Card
                 key={student.id}
                 className="bg-white shadow-sm border border-gray-200 hover:shadow-md transition-shadow"
               >
-                <CardHeader>
-                  <div className="flex items-center justify-between">
+                <CardHeader className="p-4 sm:p-6">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                     <div className="flex items-center space-x-3">
-                      <div className="h-12 w-12 rounded-full bg-[#1e3a8a] flex items-center justify-center">
-                        <span className="text-white font-medium text-lg">
+                      <div className="h-10 w-10 sm:h-12 sm:w-12 rounded-full bg-[#1e3a8a] flex items-center justify-center flex-shrink-0">
+                        <span className="text-white font-medium text-sm sm:text-lg">
                           {student.name.charAt(0).toUpperCase()}
                         </span>
                       </div>
                       <div>
-                        <CardTitle className="text-xl text-[#1e3a8a]">
+                        <CardTitle className="text-lg sm:text-xl text-[#1e3a8a]">
                           {student.name}
                         </CardTitle>
                         <CardDescription className="flex items-center space-x-2">
-                          <GraduationCap className="h-4 w-4" />
-                          <span>{student.className}</span>
+                          <GraduationCap className="h-3 w-3 sm:h-4 sm:w-4" />
+                          <span className="text-sm">{student.className}</span>
                         </CardDescription>
                       </div>
                     </div>
                     <Badge
                       variant="secondary"
-                      className="bg-blue-100 text-blue-800"
+                      className="bg-blue-100 text-blue-800 self-start"
                     >
                       Active
                     </Badge>
                   </div>
                 </CardHeader>
-                <CardContent className="space-y-4">
+                <CardContent className="space-y-4 p-4 sm:p-6">
                   {/* Teacher Information */}
-                  <div className="bg-gray-50 rounded-lg p-4">
+                  <div className="bg-gray-50 rounded-lg p-3 sm:p-4">
                     <div className="flex items-center space-x-2 mb-2">
-                      <UserCheck className="h-4 w-4 text-[#1e3a8a]" />
-                      <span className="font-medium text-[#1e3a8a]">
+                      <UserCheck className="h-3 w-3 sm:h-4 sm:w-4 text-[#1e3a8a]" />
+                      <span className="font-medium text-[#1e3a8a] text-sm sm:text-base">
                         Teacher
                       </span>
                     </div>
                     <div>
-                      <p className="font-medium text-gray-900">
+                      <p className="font-medium text-gray-900 text-sm sm:text-base">
                         {student.teacher.name}
                       </p>
-                      <p className="text-sm text-gray-600">
+                      <p className="text-xs sm:text-sm text-gray-600">
                         {student.teacher.email}
                       </p>
                     </div>
                   </div>
 
                   {/* Enrollment Date */}
-                  <div className="flex items-center space-x-2 text-sm text-gray-600">
-                    <Calendar className="h-4 w-4" />
+                  <div className="flex items-center space-x-2 text-xs sm:text-sm text-gray-600">
+                    <Calendar className="h-3 w-3 sm:h-4 sm:w-4" />
                     <span>Enrolled: {formatDate(student.createdAt)}</span>
                   </div>
 
                   {/* Recent Actions */}
                   <div>
-                    <div className="flex items-center space-x-2 mb-3">
-                      <BookOpen className="h-4 w-4 text-[#1e3a8a]" />
-                      <span className="font-medium text-[#1e3a8a]">
-                        Recent Activities
-                      </span>
-                      <Badge variant="outline" className="text-xs">
+                    <div className="flex flex-col sm:flex-row sm:items-center gap-2 mb-3">
+                      <div className="flex items-center space-x-2">
+                        <BookOpen className="h-3 w-3 sm:h-4 sm:w-4 text-[#1e3a8a]" />
+                        <span className="font-medium text-[#1e3a8a] text-sm sm:text-base">
+                          Recent Activities
+                        </span>
+                      </div>
+                      <Badge variant="outline" className="text-xs self-start">
                         {student.actions.length} total
                       </Badge>
                     </div>
@@ -398,7 +400,7 @@ export default function ParentDashboard() {
                             key={action.id}
                             className="bg-blue-50 rounded-lg p-3 border border-blue-200"
                           >
-                            <p className="text-sm text-gray-900 mb-1">
+                            <p className="text-xs sm:text-sm text-gray-900 mb-1">
                               {action.description}
                             </p>
                             <p className="text-xs text-gray-600 flex items-center space-x-1">
@@ -408,13 +410,13 @@ export default function ParentDashboard() {
                           </div>
                         ))}
                         {student.actions.length > 3 && (
-                          <p className="text-sm text-gray-500 text-center py-2">
+                          <p className="text-xs sm:text-sm text-gray-500 text-center py-2">
                             +{student.actions.length - 3} more activities
                           </p>
                         )}
                       </div>
                     ) : (
-                      <p className="text-sm text-gray-500 italic bg-gray-50 rounded-lg p-3">
+                      <p className="text-xs sm:text-sm text-gray-500 italic bg-gray-50 rounded-lg p-3">
                         No activities recorded yet
                       </p>
                     )}
@@ -425,13 +427,13 @@ export default function ParentDashboard() {
           </div>
         ) : (
           <Card className="bg-white shadow-sm border border-gray-200">
-            <CardContent className="text-center py-12">
-              <Users className="mx-auto h-12 w-12 text-gray-400 mb-4" />
-              <h3 className="text-lg font-medium text-gray-900 mb-2">
+            <CardContent className="text-center py-8 sm:py-12 p-4 sm:p-6">
+              <Users className="mx-auto h-8 w-8 sm:h-12 sm:w-12 text-gray-400 mb-4" />
+              <h3 className="text-base sm:text-lg font-medium text-gray-900 mb-2">
                 No Children Found
               </h3>
-              <p className="text-gray-500">
-                You don't have any children enrolled in the system yet.
+              <p className="text-sm sm:text-base text-gray-500">
+                You don&apos;t have any children enrolled in the system yet.
               </p>
             </CardContent>
           </Card>
@@ -440,37 +442,40 @@ export default function ParentDashboard() {
         {/* Recent Activities Summary */}
         {data?.students && getRecentActions().length > 0 && (
           <Card className="bg-white shadow-sm border border-gray-200">
-            <CardHeader>
-              <CardTitle className="text-xl font-semibold text-[#1e3a8a] flex items-center gap-2">
-                <Activity className="h-5 w-5" />
+            <CardHeader className="p-4 sm:p-6">
+              <CardTitle className="text-lg sm:text-xl font-semibold text-[#1e3a8a] flex items-center gap-2">
+                <Activity className="h-4 w-4 sm:h-5 sm:w-5" />
                 Recent Activities Across All Children
               </CardTitle>
-              <CardDescription>
+              <CardDescription className="text-sm">
                 Latest activities from all your children
               </CardDescription>
             </CardHeader>
-            <CardContent>
+            <CardContent className="p-4 sm:p-6">
               <div className="space-y-3">
                 {getRecentActions().map((action) => (
                   <div
                     key={`${action.id}-${action.studentName}`}
                     className="flex items-start space-x-3 p-3 bg-gray-50 rounded-lg"
                   >
-                    <div className="h-8 w-8 rounded-full bg-[#1e3a8a] flex items-center justify-center flex-shrink-0">
-                      <span className="text-white font-medium text-sm">
+                    <div className="h-6 w-6 sm:h-8 sm:w-8 rounded-full bg-[#1e3a8a] flex items-center justify-center flex-shrink-0">
+                      <span className="text-white font-medium text-xs sm:text-sm">
                         {action.studentName.charAt(0).toUpperCase()}
                       </span>
                     </div>
                     <div className="flex-1 min-w-0">
-                      <div className="flex items-center space-x-2 mb-1">
-                        <span className="font-medium text-gray-900">
+                      <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2 mb-1">
+                        <span className="font-medium text-gray-900 text-sm sm:text-base">
                           {action.studentName}
                         </span>
-                        <Badge variant="secondary" className="text-xs">
+                        <Badge
+                          variant="secondary"
+                          className="text-xs self-start"
+                        >
                           {action.studentClass}
                         </Badge>
                       </div>
-                      <p className="text-sm text-gray-700 mb-1">
+                      <p className="text-xs sm:text-sm text-gray-700 mb-1">
                         {action.description}
                       </p>
                       <p className="text-xs text-gray-500 flex items-center space-x-1">
@@ -487,30 +492,33 @@ export default function ParentDashboard() {
 
         {/* My Complaints Section */}
         <Card className="bg-white shadow-sm border border-gray-200">
-          <CardHeader>
-            <CardTitle className="text-xl font-semibold text-[#1e3a8a] flex items-center gap-2">
-              <MessageSquare className="h-5 w-5" />
+          <CardHeader className="p-4 sm:p-6">
+            <CardTitle className="text-lg sm:text-xl font-semibold text-[#1e3a8a] flex items-center gap-2">
+              <MessageSquare className="h-4 w-4 sm:h-5 sm:w-5" />
               My Complaints
             </CardTitle>
-            <CardDescription>
+            <CardDescription className="text-sm">
               View and track your submitted complaints and their status
             </CardDescription>
           </CardHeader>
-          <CardContent>
+          <CardContent className="p-4 sm:p-6">
             {complaintsLoading ? (
               <div className="flex items-center justify-center py-8">
-                <Loader2 className="h-6 w-6 animate-spin text-[#1e3a8a] mr-2" />
-                <span className="text-gray-600">Loading complaints...</span>
+                <Loader2 className="h-4 w-4 sm:h-6 sm:w-6 animate-spin text-[#1e3a8a] mr-2" />
+                <span className="text-sm sm:text-base text-gray-600">
+                  Loading complaints...
+                </span>
               </div>
             ) : complaints.length === 0 ? (
               <div className="text-center py-8">
-                <MessageSquare className="mx-auto h-12 w-12 text-gray-400 mb-4" />
-                <h3 className="text-lg font-medium text-gray-900 mb-2">
+                <MessageSquare className="mx-auto h-8 w-8 sm:h-12 sm:w-12 text-gray-400 mb-4" />
+                <h3 className="text-base sm:text-lg font-medium text-gray-900 mb-2">
                   No Complaints Yet
                 </h3>
-                <p className="text-gray-500 mb-4">
-                  You haven't submitted any complaints yet. Use the "Submit
-                  Complaint" button above to raise any concerns.
+                <p className="text-sm sm:text-base text-gray-500 mb-4">
+                  You haven&apos;t submitted any complaints yet. Use the
+                  &quot;Submit Complaint&quot; button above to raise any
+                  concerns.
                 </p>
               </div>
             ) : (
@@ -518,25 +526,25 @@ export default function ParentDashboard() {
                 {complaints.map((complaint) => (
                   <div
                     key={complaint.id}
-                    className="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition-colors"
+                    className="border border-gray-200 rounded-lg p-3 sm:p-4 hover:bg-gray-50 transition-colors"
                   >
-                    <div className="flex items-start justify-between mb-3">
+                    <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3 mb-3">
                       <div className="flex-1">
-                        <h4 className="font-semibold text-gray-900 mb-1">
+                        <h4 className="font-semibold text-gray-900 mb-1 text-sm sm:text-base">
                           {complaint.title}
                         </h4>
-                        <p className="text-sm text-gray-600 mb-2 line-clamp-2">
+                        <p className="text-xs sm:text-sm text-gray-600 mb-2 line-clamp-2">
                           {complaint.description}
                         </p>
-                        <div className="flex items-center gap-3 text-xs text-gray-500">
+                        <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-3 text-xs text-gray-500">
                           <span>Student: {complaint.student.name}</span>
-                          <span>•</span>
+                          <span className="hidden sm:inline">•</span>
                           <span>
                             Submitted: {formatDate(complaint.createdAt)}
                           </span>
                         </div>
                       </div>
-                      <div className="flex flex-col items-end gap-2">
+                      <div className="flex flex-col items-start sm:items-end gap-2">
                         {complaint.status === "PENDING" && (
                           <Badge
                             variant="secondary"
@@ -566,7 +574,7 @@ export default function ParentDashboard() {
                         )}
                         <button
                           onClick={() => setViewComplaint(complaint)}
-                          className="text-sm text-blue-600 hover:text-blue-700 hover:underline"
+                          className="text-xs sm:text-sm text-blue-600 hover:text-blue-700 hover:underline"
                         >
                           View Details
                         </button>
@@ -574,10 +582,10 @@ export default function ParentDashboard() {
                     </div>
                     {complaint.resolution && (
                       <div className="mt-3 p-3 bg-green-50 border border-green-200 rounded">
-                        <p className="text-sm font-medium text-green-800 mb-1">
-                          Teacher's Response:
+                        <p className="text-xs sm:text-sm font-medium text-green-800 mb-1">
+                          Teacher&apos;s Response:
                         </p>
-                        <p className="text-sm text-green-700">
+                        <p className="text-xs sm:text-sm text-green-700">
                           {complaint.resolution}
                         </p>
                       </div>

@@ -1,4 +1,5 @@
 import prisma from "@/utils/prisma";
+import { Prisma, ComplaintStatus } from "@prisma/client";
 
 export async function GET(request: Request) {
   const url = new URL(request.url);
@@ -8,12 +9,12 @@ export async function GET(request: Request) {
   const status = url.searchParams.get("status");
 
   try {
-    const where: any = {};
+    const where: Prisma.ComplaintWhereInput = {};
 
     if (parentId) where.parentId = parentId;
     if (teacherId) where.teacherId = teacherId;
     if (studentId) where.studentId = studentId;
-    if (status) where.status = status;
+    if (status) where.status = status as ComplaintStatus;
 
     const complaints = await prisma.complaint.findMany({
       where,
@@ -206,13 +207,15 @@ export async function PUT(request: Request) {
       });
     }
 
-    const updateData: any = {
+    const updateData: Prisma.ComplaintUpdateInput = {
       status,
       updatedAt: new Date(),
     };
 
     if (teacherId) {
-      updateData.teacherId = teacherId;
+      updateData.teacher = {
+        connect: { id: teacherId },
+      };
     }
 
     if (resolution) {
