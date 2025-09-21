@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/dialog";
 import { AlertTriangle, Loader2 } from "lucide-react";
 import axios from "axios";
+import toast from "react-hot-toast";
 
 interface DeleteStudentModalProps {
   studentId: string | null;
@@ -37,10 +38,12 @@ export function DeleteStudentModal({
     try {
       await axios.delete(`/api/students/${studentId}`);
 
+      toast.success("Student deleted successfully!");
       onOpenChange(false);
       onStudentDeleted();
     } catch (error: unknown) {
       console.error("Error deleting student:", error);
+      toast.error("Failed to delete student. Please try again.");
       const errorMessage =
         error instanceof Error ? error.message : "Failed to delete student";
       console.error(errorMessage);

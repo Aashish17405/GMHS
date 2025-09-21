@@ -20,6 +20,7 @@ import {
 } from "@/components/ui/select";
 import { Activity, Loader2, AlertCircle } from "lucide-react";
 import axios from "axios";
+import toast from "react-hot-toast";
 
 interface Student {
   id: string;
@@ -63,7 +64,13 @@ export function AddActionModal({
     setStudentsLoading(true);
     setError("");
     try {
-      const response = await axios.get(`/api/students?teacherId=${teacherId}`);
+      const response = await axios.get(`/api/students?teacherId=${teacherId}`, {
+        headers: {
+          "Cache-Control": "no-cache, no-store, must-revalidate",
+          Pragma: "no-cache",
+          Expires: "0",
+        },
+      });
       setStudents(response.data.students || []);
     } catch (error) {
       console.error("Error fetching students:", error);
@@ -80,7 +87,7 @@ export function AddActionModal({
         setFormData((prev) => ({ ...prev, studentId: selectedStudentId }));
       }
     }
-  }, [open, selectedStudentId, fetchStudents]);
+  }, [open, selectedStudentId, fetchStudents]); // Include fetchStudents in dependencies
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -105,6 +112,7 @@ export function AddActionModal({
       });
 
       if (response.status === 201) {
+        toast.success("Action added successfully!");
         setFormData({
           description: "",
           studentId: selectedStudentId || "",
@@ -114,6 +122,7 @@ export function AddActionModal({
       }
     } catch (error: unknown) {
       console.error("Error adding action:", error);
+      toast.error("Failed to add action. Please try again.");
       const errorMessage =
         error instanceof Error
           ? error.message

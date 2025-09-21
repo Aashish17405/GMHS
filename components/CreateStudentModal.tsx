@@ -21,6 +21,7 @@ import {
 } from "@/components/ui/select";
 import { Plus, Loader2 } from "lucide-react";
 import axios from "axios";
+import toast from "react-hot-toast";
 
 interface Parent {
   id: string;
@@ -56,7 +57,13 @@ export function CreateStudentModal({
   const fetchParents = async () => {
     setParentLoading(true);
     try {
-      const response = await axios.get("/api/parents");
+      const response = await axios.get("/api/parents", {
+        headers: {
+          "Cache-Control": "no-cache, no-store, must-revalidate",
+          Pragma: "no-cache",
+          Expires: "0",
+        },
+      });
       setParents(response.data.parents);
     } catch (error) {
       console.error("Error fetching parents:", error);
@@ -75,11 +82,13 @@ export function CreateStudentModal({
         teacherId,
       });
 
+      toast.success("Student created successfully!");
       setFormData({ name: "", className: "", parentId: "" });
       setOpen(false);
       onStudentCreated();
     } catch (error: unknown) {
       console.error("Error creating student:", error);
+      toast.error("Failed to create student. Please try again.");
       const errorMessage =
         error instanceof Error ? error.message : "Failed to create student";
       console.error(errorMessage);

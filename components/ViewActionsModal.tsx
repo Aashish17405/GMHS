@@ -40,7 +40,13 @@ export function ViewActionsModal({
   const fetchActions = useCallback(async () => {
     setLoading(true);
     try {
-      const response = await axios.get(`/api/actions?studentId=${studentId}`);
+      const response = await axios.get(`/api/actions?studentId=${studentId}`, {
+        headers: {
+          "Cache-Control": "no-cache, no-store, must-revalidate",
+          Pragma: "no-cache",
+          Expires: "0",
+        },
+      });
       setActions(response.data.actions || []);
     } catch (error) {
       console.error("Error fetching actions:", error);
@@ -53,7 +59,7 @@ export function ViewActionsModal({
     if (open) {
       fetchActions();
     }
-  }, [open, fetchActions]);
+  }, [open, fetchActions]); // Include fetchActions in dependencies
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString("en-US", {

@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Separator } from "@/components/ui/separator";
 import axios from "axios";
+import toast from "react-hot-toast";
 import {
   Select,
   SelectContent,
@@ -78,9 +79,11 @@ export default function Register({
       const data = response.data;
 
       console.log("Success:", data);
+      toast.success("Registration successful! Please login.");
       setLoginMode(true);
     } catch (error: unknown) {
       console.error("Error:", error);
+      toast.error("Registration failed. Please try again.");
       const errorMessage =
         error instanceof Error
           ? error.message

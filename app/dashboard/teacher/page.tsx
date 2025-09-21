@@ -84,6 +84,7 @@ export default function TeacherDashboardPage() {
     useState<Complaint | null>(null);
   const [viewComplaint, setViewComplaint] = useState<Complaint | null>(null);
   const [teacherId, setTeacherId] = useState<string | null>(null);
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
 
   useEffect(() => {
     // Safely access localStorage on client side only
@@ -91,19 +92,27 @@ export default function TeacherDashboardPage() {
     setTeacherId(storedTeacherId || "teacher-id-placeholder");
   }, []);
 
+  // ✅ Fix 1: Use useCallback to memoize functions
   const fetchStudents = useCallback(async () => {
     if (!teacherId) return;
 
     setLoading(true);
     try {
-      const response = await axios.get(`/api/students?teacherId=${teacherId}`);
+      const response = await axios.get(`/api/students?teacherId=${teacherId}`, {
+        headers: {
+          "Cache-Control": "no-cache, no-store, must-revalidate",
+          Pragma: "no-cache",
+          Expires: "0",
+        },
+      });
       setStudents(response.data.students);
+      console.log("Fetched students:", response.data);
     } catch (error) {
       console.error("Error fetching students:", error);
     } finally {
       setLoading(false);
     }
-  }, [teacherId]);
+  }, [teacherId]); // Only depend on teacherId
 
   const fetchComplaints = useCallback(async () => {
     if (!teacherId) return;
@@ -111,22 +120,36 @@ export default function TeacherDashboardPage() {
     setComplaintsLoading(true);
     try {
       const response = await axios.get(
-        `/api/complaints?teacherId=${teacherId}`
+        `/api/complaints?teacherId=${teacherId}`,
+        {
+          headers: {
+            "Cache-Control": "no-cache, no-store, must-revalidate",
+            Pragma: "no-cache",
+            Expires: "0",
+          },
+        }
       );
       setComplaints(response.data.complaints);
+      console.log("Fetched complaints:", response.data);
     } catch (error) {
       console.error("Error fetching complaints:", error);
     } finally {
       setComplaintsLoading(false);
     }
-  }, [teacherId]);
+  }, [teacherId]); // Only depend on teacherId
 
+  // Trigger refresh function
+  const refreshData = useCallback(() => {
+    setRefreshTrigger((prev) => prev + 1);
+  }, []);
+
+  // ✅ Fix 2: Remove function references from dependencies
   useEffect(() => {
     if (teacherId) {
       fetchStudents();
       fetchComplaints();
     }
-  }, [teacherId, fetchStudents, fetchComplaints]);
+  }, [teacherId, refreshTrigger, fetchStudents, fetchComplaints]); // Now these are stable references
 
   const handleEditStudent = (student: Student) => {
     setEditStudent(student);
@@ -250,11 +273,11 @@ export default function TeacherDashboardPage() {
             <div className="flex flex-col sm:flex-row gap-3">
               <AddActionModal
                 teacherId={teacherId || ""}
-                onActionAdded={fetchStudents}
+                onActionAdded={refreshData}
               />
               <CreateStudentModal
                 teacherId={teacherId || ""}
-                onStudentCreated={fetchStudents}
+                onStudentCreated={refreshData}
               />
             </div>
           </div>
@@ -402,7 +425,7 @@ export default function TeacherDashboardPage() {
           student={editStudent}
           open={editStudent !== null}
           onOpenChange={(open) => !open && setEditStudent(null)}
-          onStudentUpdated={fetchStudents}
+          onStudentUpdated={refreshData}
         />
 
         {/* Delete Student Modal */}
@@ -411,7 +434,7 @@ export default function TeacherDashboardPage() {
           studentName={deleteStudent?.name || ""}
           open={deleteStudent !== null}
           onOpenChange={(open) => !open && setDeleteStudent(null)}
-          onStudentDeleted={fetchStudents}
+          onStudentDeleted={refreshData}
         />
 
         {/* Add Action Modal for specific student */}
@@ -426,7 +449,7 @@ export default function TeacherDashboardPage() {
           }}
           onActionAdded={() => {
             setAddActionStudentId(null);
-            fetchStudents();
+            refreshData();
           }}
         />
 
@@ -442,7 +465,7 @@ export default function TeacherDashboardPage() {
           }}
           onComplaintUpdated={() => {
             setRespondToComplaint(null);
-            fetchComplaints();
+            refreshData();
           }}
         />
 

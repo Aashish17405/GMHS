@@ -50,7 +50,7 @@ export default function PWARegistration() {
 
       registerSW();
 
-      // Check for app updates periodically
+      // Enhanced cache management for PWA no-cache system
       const checkForUpdates = () => {
         navigator.serviceWorker.getRegistration().then((registration) => {
           if (registration) {
@@ -59,8 +59,24 @@ export default function PWARegistration() {
         });
       };
 
-      // Check for updates every 30 minutes
-      const updateInterval = setInterval(checkForUpdates, 30 * 60 * 1000);
+      // Clear API caches periodically to ensure fresh data
+      const clearApiCaches = () => {
+        if (navigator.serviceWorker.controller) {
+          navigator.serviceWorker.controller.postMessage({
+            type: "CLEAR_API_CACHE",
+          });
+          console.log("🗑️ Requested API cache clearing from PWA");
+        }
+      };
+
+      // Check for updates every 30 minutes and clear API caches
+      const updateInterval = setInterval(() => {
+        checkForUpdates();
+        clearApiCaches();
+      }, 30 * 60 * 1000);
+
+      // Clear API caches on initial load to ensure fresh start
+      setTimeout(clearApiCaches, 5000);
 
       return () => {
         clearInterval(updateInterval);

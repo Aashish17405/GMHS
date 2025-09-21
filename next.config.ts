@@ -30,6 +30,28 @@ const nextConfig: NextConfig = {
           },
         ],
       },
+      // Ensure NO caching for ALL API routes
+      {
+        source: "/api/:path*",
+        headers: [
+          {
+            key: "Cache-Control",
+            value: "no-cache, no-store, must-revalidate",
+          },
+          {
+            key: "Pragma",
+            value: "no-cache",
+          },
+          {
+            key: "Expires",
+            value: "0",
+          },
+          {
+            key: "Last-Modified",
+            value: new Date().toUTCString(),
+          },
+        ],
+      },
     ];
   },
   // Enable static file serving for PWA assets

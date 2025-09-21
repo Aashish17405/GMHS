@@ -1,7 +1,7 @@
 "use client";
 
 import axios from "axios";
-import { useEffect, useState, useCallback } from "react";
+import { useState, useEffect } from "react";
 import {
   Card,
   CardContent,
@@ -83,6 +83,73 @@ export default function ParentDashboard() {
   const [complaints, setComplaints] = useState<Complaint[]>([]);
   const [viewComplaint, setViewComplaint] = useState<Complaint | null>(null);
   const [parentId, setParentId] = useState<string | null>(null);
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
+  const [formData, setFormData] = useState([
+    {
+      id: 1,
+      question: "Child often needs assistance in completing home work.",
+      "yes/no": null,
+      isComplaint: true,
+    },
+    {
+      id: 2,
+      question: "The hand writing is clear, neat and age-appropriate.",
+      "yes/no": null,
+      isComplaint: true,
+    },
+    {
+      id: 3,
+      question: "Child is gradually gaining confidence in speaking English.",
+      "yes/no": null,
+      isComplaint: false,
+    },
+    {
+      id: 4,
+      question: "Spelling mistakes in Languages are a recurring concern.",
+      "yes/no": null,
+      isComplaint: true,
+    },
+    {
+      id: 5,
+      question: "Subject understanding requires personal support at school.",
+      "yes/no": null,
+      isComplaint: true,
+    },
+    {
+      id: 6,
+      question:
+        "There have been concerns regarding interaction with any teacher.",
+      "yes/no": null,
+      isComplaint: true,
+    },
+    {
+      id: 7,
+      question:
+        "Notebooks are being corrected regularly and are up to the mark.",
+      "yes/no": null,
+      isComplaint: false,
+    },
+    {
+      id: 8,
+      question:
+        "The child experienced discomfort or issues with peers / classmates.",
+      "yes/no": null,
+      isComplaint: true,
+    },
+    {
+      id: 9,
+      question:
+        "The School provides sufficient opportunities for participation in extra / co-curricular activities.",
+      "yes/no": null,
+      isComplaint: false,
+    },
+    {
+      id: 10,
+      question: "Daily study hours at school are consistent and focused.",
+      "yes/no": null,
+      isComplaint: false,
+    },
+  ]);
 
   useEffect(() => {
     const storedParentId = localStorage.getItem("id");
@@ -90,13 +157,19 @@ export default function ParentDashboard() {
     setParentId(storedParentId);
   }, []);
 
-  const fetchData = useCallback(async () => {
+  const fetchData = async () => {
     if (!parentId) return;
 
     try {
       setLoading(true);
       setError(null);
-      const response = await axios.get(`/api/child?parentId=${parentId}`);
+      const response = await axios.get(`/api/child?parentId=${parentId}`, {
+        headers: {
+          "Cache-Control": "no-cache, no-store, must-revalidate",
+          Pragma: "no-cache",
+          Expires: "0",
+        },
+      });
       setData(response.data);
       console.log(response.data);
     } catch (err: unknown) {
@@ -106,28 +179,48 @@ export default function ParentDashboard() {
     } finally {
       setLoading(false);
     }
-  }, [parentId]);
+  };
 
-  const fetchComplaints = useCallback(async () => {
+  const fetchComplaints = async () => {
     if (!parentId) return;
 
     try {
       setComplaintsLoading(true);
-      const response = await axios.get(`/api/complaints?parentId=${parentId}`);
+      const response = await axios.get(`/api/complaints?parentId=${parentId}`, {
+        headers: {
+          "Cache-Control": "no-cache, no-store, must-revalidate",
+          Pragma: "no-cache",
+          Expires: "0",
+        },
+      });
       setComplaints(response.data.complaints || []);
     } catch (err: unknown) {
       console.error("Error fetching complaints:", err);
     } finally {
       setComplaintsLoading(false);
     }
-  }, [parentId]);
+  };
 
+  // Function to trigger refresh from modals
+  const triggerRefresh = () => {
+    setRefreshTrigger((prev) => prev + 1);
+  };
+
+  // Initial data load when parentId changes
   useEffect(() => {
     if (parentId) {
       fetchData();
       fetchComplaints();
     }
-  }, [parentId, fetchData, fetchComplaints]);
+  }, [parentId]); // Remove fetchData and fetchComplaints from dependencies
+
+  // Handle refresh trigger
+  useEffect(() => {
+    if (refreshTrigger > 0 && parentId) {
+      fetchData();
+      fetchComplaints();
+    }
+  }, [refreshTrigger]); // Remove parentId and fetch functions from dependencies
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString("en-US", {
@@ -225,7 +318,7 @@ export default function ParentDashboard() {
             <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
               <SubmitComplaintModal
                 parentId={parentId || ""}
-                onComplaintSubmitted={fetchComplaints}
+                onComplaintSubmitted={triggerRefresh}
               />
               <div className="flex items-center space-x-2 text-[#1e3a8a]">
                 <Users className="h-4 w-4 sm:h-6 sm:w-6" />

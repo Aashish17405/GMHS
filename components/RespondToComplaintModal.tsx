@@ -26,6 +26,7 @@ import {
   Clock,
 } from "lucide-react";
 import axios from "axios";
+import toast from "react-hot-toast";
 
 interface Complaint {
   id: string;
@@ -114,11 +115,13 @@ export function RespondToComplaintModal({
       });
 
       if (response.status === 200) {
+        toast.success("Complaint updated successfully!");
         onOpenChange(false);
         onComplaintUpdated();
       }
     } catch (error: unknown) {
       console.error("Error updating complaint:", error);
+      toast.error("Failed to update complaint. Please try again.");
       const errorMessage =
         error instanceof Error
           ? error.message

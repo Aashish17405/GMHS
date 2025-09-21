@@ -21,6 +21,7 @@ import {
 } from "@/components/ui/select";
 import { AlertTriangle, Loader2, AlertCircle, FileText } from "lucide-react";
 import axios from "axios";
+import toast from "react-hot-toast";
 
 interface Student {
   id: string;
@@ -66,8 +67,13 @@ export function SubmitComplaintModal({
     setStudentsLoading(true);
     setError("");
     try {
-      // Fetch students for this parent
-      const response = await axios.get(`/api/child?parentId=${parentId}`);
+      const response = await axios.get(`/api/child?parentId=${parentId}`, {
+        headers: {
+          "Cache-Control": "no-cache, no-store, must-revalidate",
+          Pragma: "no-cache",
+          Expires: "0",
+        },
+      });
       setStudents(response.data.students || []);
     } catch (error) {
       console.error("Error fetching students:", error);
@@ -84,7 +90,7 @@ export function SubmitComplaintModal({
         setFormData((prev) => ({ ...prev, studentId: selectedStudentId }));
       }
     }
-  }, [open, selectedStudentId, fetchStudents]);
+  }, [open, selectedStudentId, fetchStudents]); // Include fetchStudents in dependencies
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -121,6 +127,7 @@ export function SubmitComplaintModal({
       });
 
       if (response.status === 201) {
+        toast.success("Complaint submitted successfully!");
         setFormData({
           title: "",
           description: "",
@@ -132,6 +139,7 @@ export function SubmitComplaintModal({
       }
     } catch (error: unknown) {
       console.error("Error submitting complaint:", error);
+      toast.error("Failed to submit complaint. Please try again.");
       const errorMessage =
         error instanceof Error
           ? error.message

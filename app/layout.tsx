@@ -3,6 +3,8 @@ import { Geist, Geist_Mono } from "next/font/google";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { Analytics } from "@vercel/analytics/next";
 import PWARegistration from "@/components/PWARegistration";
+import { ToastProvider } from "@/components/ToastProvider";
+import "@/lib/pwa-cache-manager"; // Initialize PWA cache manager
 import "./globals.css";
 
 const geistSans = Geist({
@@ -125,6 +127,7 @@ export default function RootLayout({
         suppressHydrationWarning={true}
       >
         <PWARegistration />
+        <ToastProvider />
         <SpeedInsights />
         <Analytics />
         {children}

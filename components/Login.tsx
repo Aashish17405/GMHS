@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Separator } from "@/components/ui/separator";
 import axios from "axios";
+import toast from "react-hot-toast";
 
 export default function Login({
   setLoginMode,
@@ -41,6 +42,7 @@ export default function Login({
       const data = response.data;
 
       console.log("Success:", data);
+      toast.success("Login successful!");
       if (data.role === "ADMIN") {
         router.push("/dashboard/admin");
       } else if (data.role === "TEACHER") {
@@ -51,6 +53,7 @@ export default function Login({
       localStorage.setItem("id", data.id);
     } catch (error: unknown) {
       console.error("Error:", error);
+      toast.error("Login failed. Please check your credentials.");
       const errorMessage =
         error instanceof Error
           ? error.message

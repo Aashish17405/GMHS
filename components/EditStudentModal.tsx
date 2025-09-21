@@ -20,6 +20,7 @@ import {
 } from "@/components/ui/select";
 import { Loader2 } from "lucide-react";
 import axios from "axios";
+import toast from "react-hot-toast";
 
 interface Parent {
   id: string;
@@ -74,7 +75,13 @@ export function EditStudentModal({
   const fetchParents = async () => {
     setParentLoading(true);
     try {
-      const response = await axios.get("/api/parents");
+      const response = await axios.get("/api/parents", {
+        headers: {
+          "Cache-Control": "no-cache, no-store, must-revalidate",
+          Pragma: "no-cache",
+          Expires: "0",
+        },
+      });
       setParents(response.data.parents);
     } catch (error) {
       console.error("Error fetching parents:", error);
@@ -92,10 +99,12 @@ export function EditStudentModal({
     try {
       await axios.put(`/api/students/${student.id}`, formData);
 
+      toast.success("Student updated successfully!");
       onOpenChange(false);
       onStudentUpdated();
     } catch (error: unknown) {
       console.error("Error updating student:", error);
+      toast.error("Failed to update student. Please try again.");
       const errorMessage =
         error instanceof Error ? error.message : "Failed to update student";
       console.error(errorMessage);

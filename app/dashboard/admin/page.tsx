@@ -127,7 +127,7 @@ export default function AdminDashboard() {
 
   useEffect(() => {
     fetchDashboardData();
-  }, []);
+  }, []); // Run once on component mount
 
   const fetchDashboardData = async () => {
     try {
@@ -135,8 +135,20 @@ export default function AdminDashboard() {
       setError(null);
 
       const [statsResponse, teachersResponse] = await Promise.all([
-        axios.get("/api/admin/dashboard"),
-        axios.get("/api/admin/teachers"),
+        axios.get(`/api/admin/dashboard`, {
+          headers: {
+            "Cache-Control": "no-cache, no-store, must-revalidate",
+            Pragma: "no-cache",
+            Expires: "0",
+          },
+        }),
+        axios.get(`/api/admin/teachers`, {
+          headers: {
+            "Cache-Control": "no-cache, no-store, must-revalidate",
+            Pragma: "no-cache",
+            Expires: "0",
+          },
+        }),
       ]);
 
       setDashboardStats(statsResponse.data);
