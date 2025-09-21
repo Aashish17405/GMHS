@@ -10,13 +10,41 @@ interface BeforeInstallPromptEvent extends Event {
 
 interface InstallPromptProps {
   onClose?: () => void;
+  manualTrigger?: boolean; // For manual install button
+  className?: string;
 }
 
-export default function InstallPrompt({ onClose }: InstallPromptProps) {
+export default function InstallPrompt({ 
+  onClose, 
+  manualTrigger = false,
+  className = ""
+}: InstallPromptProps) {
   const [isVisible, setIsVisible] = useState(false);
   const [deferredPrompt, setDeferredPrompt] =
     useState<BeforeInstallPromptEvent | null>(null);
   const [isInstallable, setIsInstallable] = useState(false);
+
+  // Check if prompt should be shown (once per day)
+  const shouldShowPrompt = () => {
+    const lastShown = localStorage.getItem('pwa-prompt-last-shown');
+    const lastDismissed = localStorage.getItem('pwa-prompt-dismissed');
+    
+    if (!lastShown && !lastDismissed) return true; // First time
+    
+    if (lastDismissed) {
+      const dismissedDate = new Date(lastDismissed);
+      const daysSinceDismissed = (Date.now() - dismissedDate.getTime()) / (1000 * 60 * 60 * 24);
+      return daysSinceDismissed >= 1; // Show again after 1 day
+    }
+    
+    if (lastShown) {
+      const shownDate = new Date(lastShown);
+      const daysSinceShown = (Date.now() - shownDate.getTime()) / (1000 * 60 * 60 * 24);
+      return daysSinceShown >= 1; // Show again after 1 day
+    }
+    
+    return false;
+  };
 
   useEffect(() => {
     const handleBeforeInstallPrompt = (e: Event) => {
@@ -26,10 +54,13 @@ export default function InstallPrompt({ onClose }: InstallPromptProps) {
       setDeferredPrompt(e as BeforeInstallPromptEvent);
       setIsInstallable(true);
 
-      // Show the install prompt after a delay
-      setTimeout(() => {
-        setIsVisible(true);
-      }, 5000); // Show after 5 seconds
+      // Only show automatic prompt if it's been a day and not manually triggered
+      if (!manualTrigger && shouldShowPrompt()) {
+        setTimeout(() => {
+          setIsVisible(true);
+          localStorage.setItem('pwa-prompt-last-shown', new Date().toISOString());
+        }, 5000); // Show after 5 seconds
+      }
     };
 
     const handleAppInstalled = () => {
@@ -37,6 +68,9 @@ export default function InstallPrompt({ onClose }: InstallPromptProps) {
       setIsVisible(false);
       setIsInstallable(false);
       setDeferredPrompt(null);
+      // Clear the localStorage items since app is now installed
+      localStorage.removeItem('pwa-prompt-last-shown');
+      localStorage.removeItem('pwa-prompt-dismissed');
     };
 
     window.addEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
@@ -50,6 +84,11 @@ export default function InstallPrompt({ onClose }: InstallPromptProps) {
       setIsInstallable(false);
     }
 
+    // For manual trigger, show immediately if installable
+    if (manualTrigger && isInstallable && deferredPrompt) {
+      setIsVisible(true);
+    }
+
     return () => {
       window.removeEventListener(
         "beforeinstallprompt",
@@ -57,7 +96,7 @@ export default function InstallPrompt({ onClose }: InstallPromptProps) {
       );
       window.removeEventListener("appinstalled", handleAppInstalled);
     };
-  }, []);
+  }, [manualTrigger, isInstallable, deferredPrompt]);
 
   const handleInstallClick = async () => {
     if (!deferredPrompt) {
@@ -72,19 +111,42 @@ export default function InstallPrompt({ onClose }: InstallPromptProps) {
 
     if (outcome === "accepted") {
       console.log("User accepted the install prompt");
+      localStorage.removeItem('pwa-prompt-dismissed');
     } else {
       console.log("User dismissed the install prompt");
+      localStorage.setItem('pwa-prompt-dismissed', new Date().toISOString());
     }
 
     // Clear the deferredPrompt variable
     setDeferredPrompt(null);
     setIsVisible(false);
+    onClose?.();
   };
 
   const handleClose = () => {
     setIsVisible(false);
+    if (!manualTrigger) {
+      localStorage.setItem('pwa-prompt-dismissed', new Date().toISOString());
+    }
     onClose?.();
   };
+
+  // For manual trigger button, return a simple button
+  if (manualTrigger) {
+    if (!isInstallable || !deferredPrompt) {
+      return null; // Don't show button if not installable
+    }
+    
+    return (
+      <button
+        onClick={handleInstallClick}
+        className={`inline-flex items-center space-x-2 bg-blue-600 text-white py-2 px-4 rounded-md text-sm font-medium hover:bg-blue-700 transition-colors ${className}`}
+      >
+        <Download className="w-4 h-4" />
+        <span>Install App</span>
+      </button>
+    );
+  }
 
   if (!isVisible || !isInstallable) {
     return null;

@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Separator } from "@/components/ui/separator";
-import axios from "axios";
+import { apiClient } from "@/lib/api";
 import toast from "react-hot-toast";
 
 export default function Login({
@@ -38,7 +38,7 @@ export default function Login({
     setError("");
 
     try {
-      const response = await axios.post("/api/auth/signin", formData);
+      const response = await apiClient.post("/api/auth/signin", formData);
       const data = response.data;
 
       console.log("Success:", data);

@@ -61,12 +61,17 @@ export default apiClient;
 
 // Export convenience methods with proper types
 export const api = {
-  get: <T = unknown>(url: string, config?: object) => apiClient.get<T>(url, config),
+  get: <T = unknown>(url: string, config?: object) =>
+    apiClient.get<T>(url, config),
   post: <T = unknown>(url: string, data?: unknown, config?: object) =>
     apiClient.post<T>(url, data, config),
   put: <T = unknown>(url: string, data?: unknown, config?: object) =>
     apiClient.put<T>(url, data, config),
   patch: <T = unknown>(url: string, data?: unknown, config?: object) =>
     apiClient.patch<T>(url, data, config),
-  delete: <T = unknown>(url: string, config?: object) => apiClient.delete<T>(url, config),
+  delete: <T = unknown>(url: string, config?: object) =>
+    apiClient.delete<T>(url, config),
 };
+
+// Export the apiClient for direct usage
+export { apiClient };

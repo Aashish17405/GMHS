@@ -25,7 +25,7 @@ import {
   CheckCircle,
   Clock,
 } from "lucide-react";
-import axios from "axios";
+import { apiClient } from "@/lib/api";
 import toast from "react-hot-toast";
 
 interface Complaint {
@@ -107,7 +107,7 @@ export function RespondToComplaintModal({
 
     setLoading(true);
     try {
-      const response = await axios.put("/api/complaints", {
+      const response = await apiClient.put("/api/complaints", {
         complaintId: complaint.id,
         status: formData.status,
         resolution: formData.resolution.trim() || undefined,

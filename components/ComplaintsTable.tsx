@@ -173,9 +173,6 @@ export function ComplaintsTable({
                 Parent
               </TableHead>
               <TableHead className="font-semibold text-[#1e3a8a]">
-                Type
-              </TableHead>
-              <TableHead className="font-semibold text-[#1e3a8a]">
                 Status
               </TableHead>
               <TableHead className="font-semibold text-[#1e3a8a]">
@@ -224,7 +221,6 @@ export function ComplaintsTable({
                     </div>
                   </div>
                 </TableCell>
-                <TableCell>{getTypeBadge(complaint.type)}</TableCell>
                 <TableCell>{getStatusBadge(complaint.status)}</TableCell>
                 <TableCell>
                   <div className="text-sm">

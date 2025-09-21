@@ -63,6 +63,13 @@ const nextConfig: NextConfig = {
       },
     ];
   },
+
+  // Explicitly disable i18n to prevent automatic locale detection
+  i18n: undefined,
+
+  // Disable automatic locale detection
+  trailingSlash: false,
+  skipMiddlewareUrlNormalize: false,
 };
 
 export default nextConfig;

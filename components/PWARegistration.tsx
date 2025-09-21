@@ -84,5 +84,10 @@ export default function PWARegistration() {
     }
   }, []);
 
-  return <InstallPrompt />;
+  return (
+    <>
+      {/* Automatic install prompt with daily limit */}
+      <InstallPrompt />
+    </>
+  );
 }

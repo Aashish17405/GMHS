@@ -1,4 +1,6 @@
-const CACHE_NAME = "gmhs-no-api-cache-v4";
+// GMHS School Management System - PWA Service Worker
+// Updated: 2025-09-21 - Simplified to bypass API requests completely
+const CACHE_NAME = "gmhs-no-api-cache-v7";
 const urlsToCache = [
   "/",
   "/dashboard/admin",
@@ -73,19 +75,38 @@ function createNoCacheRequest(originalRequest) {
   headers.set("X-PWA-No-Cache", "true");
   headers.set("X-Cache-Buster", Date.now().toString());
 
-  return new Request(originalRequest.url, {
+  // Build request options safely
+  const requestOptions = {
     method: originalRequest.method,
     headers: headers,
-    body: originalRequest.body,
     mode: originalRequest.mode,
     credentials: originalRequest.credentials,
     cache: "no-store",
     redirect: originalRequest.redirect,
-    referrer: originalRequest.referrer,
-    referrerPolicy: originalRequest.referrerPolicy,
-    integrity: originalRequest.integrity,
-    signal: originalRequest.signal,
-  });
+  };
+
+  // Only add body-related properties for requests that can have bodies
+  const methodsWithBody = ["POST", "PUT", "PATCH"];
+  if (methodsWithBody.includes(originalRequest.method.toUpperCase())) {
+    requestOptions.body = originalRequest.body;
+    requestOptions.duplex = "half";
+  }
+
+  // Add other properties if they exist
+  if (originalRequest.referrer) {
+    requestOptions.referrer = originalRequest.referrer;
+  }
+  if (originalRequest.referrerPolicy) {
+    requestOptions.referrerPolicy = originalRequest.referrerPolicy;
+  }
+  if (originalRequest.integrity) {
+    requestOptions.integrity = originalRequest.integrity;
+  }
+  if (originalRequest.signal) {
+    requestOptions.signal = originalRequest.signal;
+  }
+
+  return new Request(originalRequest.url, requestOptions);
 }
 
 // Enhanced response modifier for PWA no-cache
@@ -113,12 +134,12 @@ function createNoCacheResponse(originalResponse) {
 
 // Install service worker
 self.addEventListener("install", (event) => {
-  console.log("🔧 PWA Service Worker installing...");
+  // console.log("🔧 PWA Service Worker installing...");
   event.waitUntil(
     caches
       .open(CACHE_NAME)
       .then((cache) => {
-        console.log("📦 Opened cache for static assets");
+        // console.log("📦 Opened cache for static assets");
         return cache.addAll(urlsToCache);
       })
       .catch((error) => {
@@ -130,13 +151,13 @@ self.addEventListener("install", (event) => {
 
 // Activate service worker
 self.addEventListener("activate", (event) => {
-  console.log("✅ PWA Service Worker activating...");
+  // console.log("✅ PWA Service Worker activating...");
   event.waitUntil(
     caches.keys().then((cacheNames) => {
       return Promise.all(
         cacheNames.map((cacheName) => {
           if (cacheName !== CACHE_NAME) {
-            console.log("🗑️ Deleting old cache:", cacheName);
+            // console.log("🗑️ Deleting old cache:", cacheName);
             return caches.delete(cacheName);
           }
         })
@@ -152,45 +173,13 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  // ENHANCED: Complete API request bypass with comprehensive no-cache
+  // ENHANCED: Complete API request bypass - no service worker interference
   if (isApiRequest(event.request.url)) {
     console.log(
-      "🚫 API request detected - Complete cache bypass:",
+      "🚫 API request detected - Bypassing service worker completely:",
       event.request.url
     );
-
-    const noCacheRequest = createNoCacheRequest(event.request);
-
-    event.respondWith(
-      fetch(noCacheRequest)
-        .then((response) => {
-          console.log("✅ Fresh API response fetched:", event.request.url);
-          const noCacheResponse = createNoCacheResponse(response);
-          return noCacheResponse;
-        })
-        .catch((error) => {
-          console.error("❌ API fetch failed:", error);
-
-          if (navigator.onLine === false) {
-            return new Response(
-              JSON.stringify({
-                error: "Offline",
-                message: "This action requires an internet connection",
-                timestamp: Date.now(),
-              }),
-              {
-                status: 503,
-                statusText: "Service Unavailable",
-                headers: new Headers({
-                  "Content-Type": "application/json",
-                  "X-Offline-Response": "true",
-                }),
-              }
-            );
-          }
-          throw error;
-        })
-    );
+    // Let the browser handle API requests directly without any service worker intervention
     return;
   }
 
@@ -215,9 +204,12 @@ self.addEventListener("fetch", (event) => {
 
           const responseToCache = response.clone();
 
-          caches.open(CACHE_NAME).then((cache) => {
-            cache.put(event.request, responseToCache);
-          });
+          // Only cache GET requests - never cache POST/PUT/PATCH requests
+          if (event.request.method === "GET") {
+            caches.open(CACHE_NAME).then((cache) => {
+              cache.put(event.request, responseToCache);
+            });
+          }
 
           return response;
         })
@@ -234,7 +226,7 @@ self.addEventListener("fetch", (event) => {
 
 // Enhanced background sync for PWA
 self.addEventListener("sync", (event) => {
-  console.log("🔄 Background sync triggered:", event.tag);
+  // console.log("🔄 Background sync triggered:", event.tag);
 
   if (event.tag === "background-sync") {
     event.waitUntil(doBackgroundSync());
@@ -306,7 +298,7 @@ self.addEventListener("notificationclick", (event) => {
 
 // Enhanced message handling for PWA
 self.addEventListener("message", (event) => {
-  console.log("💬 PWA Service Worker received message:", event.data);
+  // console.log("💬 PWA Service Worker received message:", event.data);
 
   if (event.data && event.data.type === "SKIP_WAITING") {
     self.skipWaiting();
@@ -314,7 +306,7 @@ self.addEventListener("message", (event) => {
 
   // Handle cache clearing requests from the app
   if (event.data && event.data.type === "CLEAR_API_CACHE") {
-    console.log("🗑️ Clearing all API caches on request");
+    // console.log("🗑️ Clearing all API caches on request");
     caches.keys().then((cacheNames) => {
       cacheNames.forEach((cacheName) => {
         if (cacheName.includes("api") || cacheName.includes("data")) {

@@ -31,6 +31,7 @@ import {
 } from "lucide-react";
 import axios from "axios";
 import { AdminComplaintsTable } from "@/components/AdminComplaintsTable";
+import InstallPrompt from "@/components/InstallPrompt";
 
 interface DashboardStats {
   userStats: {
@@ -198,6 +199,7 @@ export default function AdminDashboard() {
               </div>
             </div>
             <div className="flex items-center space-x-2 sm:space-x-4">
+              <InstallPrompt manualTrigger={true} />
               <div className="hidden md:flex items-center space-x-2 bg-emerald-50 px-3 py-2 rounded-lg">
                 <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></div>
                 <span className="text-sm font-medium text-emerald-700">

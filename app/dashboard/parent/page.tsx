@@ -1,7 +1,8 @@
 "use client";
 
-import axios from "axios";
+import { apiClient } from "@/lib/api";
 import { useState, useEffect } from "react";
+import toast from "react-hot-toast";
 import {
   Card,
   CardContent,
@@ -11,8 +12,26 @@ import {
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { SubmitComplaintModal } from "@/components/SubmitComplaintModal";
 import { ViewComplaintModal } from "@/components/ViewComplaintModal";
+import InstallPrompt from "@/components/InstallPrompt";
 import {
   Users,
   GraduationCap,
@@ -84,72 +103,99 @@ export default function ParentDashboard() {
   const [viewComplaint, setViewComplaint] = useState<Complaint | null>(null);
   const [parentId, setParentId] = useState<string | null>(null);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
+  const [selectedChild, setSelectedChild] = useState<string>("");
+  const [showComplaintForm, setShowComplaintForm] = useState(false);
   const [formData, setFormData] = useState([
     {
       id: 1,
       question: "Child often needs assistance in completing home work.",
-      "yes/no": null,
+      answer: null as boolean | null,
       isComplaint: true,
+      requiresText: false,
+      additionalText: "",
     },
     {
       id: 2,
       question: "The hand writing is clear, neat and age-appropriate.",
-      "yes/no": null,
-      isComplaint: true,
+      answer: null as boolean | null,
+      isComplaint: false, // No complaint when handwriting is good
+      requiresText: false,
+      additionalText: "",
     },
     {
       id: 3,
       question: "Child is gradually gaining confidence in speaking English.",
-      "yes/no": null,
-      isComplaint: false,
+      answer: null as boolean | null,
+      isComplaint: false, // No complaint when confidence is growing
+      requiresText: false,
+      additionalText: "",
     },
     {
       id: 4,
       question: "Spelling mistakes in Languages are a recurring concern.",
-      "yes/no": null,
+      answer: null as boolean | null,
       isComplaint: true,
+      requiresText: true,
+      textLabel: "Mention language:",
+      additionalText: "",
     },
     {
       id: 5,
       question: "Subject understanding requires personal support at school.",
-      "yes/no": null,
+      answer: null as boolean | null,
       isComplaint: true,
+      requiresText: true,
+      textLabel: "Mention subject:",
+      additionalText: "",
     },
     {
       id: 6,
       question:
         "There have been concerns regarding interaction with any teacher.",
-      "yes/no": null,
+      answer: null as boolean | null,
       isComplaint: true,
+      requiresText: true,
+      textLabel: "Mention teacher name:",
+      additionalText: "",
     },
     {
       id: 7,
       question:
         "Notebooks are being corrected regularly and are up to the mark.",
-      "yes/no": null,
-      isComplaint: false,
+      answer: null as boolean | null,
+      isComplaint: false, // No complaint when notebooks are being corrected
+      requiresText: false,
+      additionalText: "",
     },
     {
       id: 8,
       question:
-        "The child experienced discomfort or issues with peers / classmates.",
-      "yes/no": null,
+        "The child experienced discomfort or issues with peers/classmates.",
+      answer: null as boolean | null,
       isComplaint: true,
+      requiresText: true,
+      textLabel: "Describe the issue:",
+      additionalText: "",
     },
     {
       id: 9,
       question:
-        "The School provides sufficient opportunities for participation in extra / co-curricular activities.",
-      "yes/no": null,
-      isComplaint: false,
+        "The School provides sufficient opportunities for participation in extra/co-curricular activities.",
+      answer: null as boolean | null,
+      isComplaint: false, // No complaint when opportunities are sufficient
+      requiresText: false,
+      additionalText: "",
     },
     {
       id: 10,
       question: "Daily study hours at school are consistent and focused.",
-      "yes/no": null,
-      isComplaint: false,
+      answer: null as boolean | null,
+      isComplaint: false, // No complaint when study hours are consistent
+      requiresText: false,
+      additionalText: "",
     },
   ]);
+  const [compiledComplaints, setCompiledComplaints] = useState<string>("");
 
   useEffect(() => {
     const storedParentId = localStorage.getItem("id");
@@ -163,7 +209,7 @@ export default function ParentDashboard() {
     try {
       setLoading(true);
       setError(null);
-      const response = await axios.get(`/api/child?parentId=${parentId}`, {
+      const response = await apiClient.get(`/api/child?parentId=${parentId}`, {
         headers: {
           "Cache-Control": "no-cache, no-store, must-revalidate",
           Pragma: "no-cache",
@@ -186,13 +232,16 @@ export default function ParentDashboard() {
 
     try {
       setComplaintsLoading(true);
-      const response = await axios.get(`/api/complaints?parentId=${parentId}`, {
-        headers: {
-          "Cache-Control": "no-cache, no-store, must-revalidate",
-          Pragma: "no-cache",
-          Expires: "0",
-        },
-      });
+      const response = await apiClient.get(
+        `/api/complaints?parentId=${parentId}`,
+        {
+          headers: {
+            "Cache-Control": "no-cache, no-store, must-revalidate",
+            Pragma: "no-cache",
+            Expires: "0",
+          },
+        }
+      );
       setComplaints(response.data.complaints || []);
     } catch (err: unknown) {
       console.error("Error fetching complaints:", err);
@@ -204,6 +253,118 @@ export default function ParentDashboard() {
   // Function to trigger refresh from modals
   const triggerRefresh = () => {
     setRefreshTrigger((prev) => prev + 1);
+  };
+
+  // Handle answer change
+  const handleAnswerChange = (questionId: number, answer: boolean) => {
+    setFormData((prev) =>
+      prev.map((item) => (item.id === questionId ? { ...item, answer } : item))
+    );
+  };
+
+  // Handle additional text change
+  const handleTextChange = (questionId: number, text: string) => {
+    setFormData((prev) =>
+      prev.map((item) =>
+        item.id === questionId ? { ...item, additionalText: text } : item
+      )
+    );
+  };
+
+  // Compile complaints from form data
+  const compileComplaints = () => {
+    const complaints: string[] = [];
+
+    formData.forEach((item) => {
+      // For complaint items, add to complaints if:
+      // - isComplaint is true and answer is true (YES to a problem)
+      // - isComplaint is false and answer is false (NO to a good thing)
+      const shouldComplain =
+        (item.isComplaint && item.answer === true) ||
+        (!item.isComplaint && item.answer === false);
+
+      if (shouldComplain) {
+        let complaintText = item.question;
+        if (item.requiresText && item.additionalText.trim()) {
+          complaintText += ` Details: ${item.additionalText.trim()}`;
+        }
+        complaints.push(complaintText);
+      }
+    });
+
+    return complaints.join(" | ");
+  };
+
+  // Submit complaint form
+  const handleSubmitComplaintForm = async () => {
+    if (!selectedChild) {
+      toast.error("Please select a child");
+      return;
+    }
+
+    const compiledText = compileComplaints();
+    if (!compiledText.trim()) {
+      toast.error("No complaints to submit based on your answers");
+      return;
+    }
+
+    try {
+      const selectedStudent = data?.students.find(
+        (s) => s.id === selectedChild
+      );
+      if (!selectedStudent) {
+        toast.error("Selected child not found");
+        return;
+      }
+
+      const complaintData = {
+        title: `Concerns for ${selectedStudent.name}`,
+        description: compiledText,
+        type: "OTHER",
+        studentId: selectedChild,
+        parentId: parentId,
+      };
+
+      console.log("Submitting complaint:", complaintData);
+
+      const response = await apiClient.post("/api/complaints", complaintData, {
+        headers: {
+          "Cache-Control": "no-cache, no-store, must-revalidate",
+          Pragma: "no-cache",
+          Expires: "0",
+        },
+      });
+
+      if (response.status === 201) {
+        toast.success("Complaint submitted successfully!");
+        setShowComplaintForm(false);
+        setSelectedChild("");
+        setFormData((prev) =>
+          prev.map((item) => ({
+            ...item,
+            answer: null,
+            additionalText: "",
+          }))
+        );
+        triggerRefresh();
+      }
+    } catch (error) {
+      console.error("Error submitting complaint:", error);
+      toast.error("Failed to submit complaint. Please try again.");
+    }
+  };
+
+  // Reset form
+  const resetForm = () => {
+    setSelectedChild("");
+    setFormData((prev) =>
+      prev.map((item) => ({
+        ...item,
+        answer: null,
+        additionalText: "",
+      }))
+    );
+    setShowComplaintForm(false);
   };
 
   // Initial data load when parentId changes
@@ -316,10 +477,15 @@ export default function ParentDashboard() {
               </p>
             </div>
             <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
-              <SubmitComplaintModal
-                parentId={parentId || ""}
-                onComplaintSubmitted={triggerRefresh}
-              />
+              <InstallPrompt manualTrigger={true} />
+              <Button
+                onClick={() => setShowComplaintForm(true)}
+                className="bg-[#1e3a8a] hover:bg-[#1e40af] text-white"
+                disabled={!data?.students || data.students.length === 0}
+              >
+                <MessageSquare className="h-4 w-4 mr-2" />
+                Submit Complaint
+              </Button>
               <div className="flex items-center space-x-2 text-[#1e3a8a]">
                 <Users className="h-4 w-4 sm:h-6 sm:w-6" />
                 <span className="text-xs sm:text-sm font-medium">
@@ -700,6 +866,152 @@ export default function ParentDashboard() {
             }
           }}
         />
+
+        {/* Complaint Form Dialog */}
+        <Dialog open={showComplaintForm} onOpenChange={setShowComplaintForm}>
+          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle className="text-xl font-bold text-[#1e3a8a]">
+                Submit Complaint - Parent Feedback Form
+              </DialogTitle>
+              <DialogDescription>
+                Please select a child and answer the following questions. Your
+                responses will help us address any concerns.
+              </DialogDescription>
+            </DialogHeader>
+
+            <div className="space-y-6">
+              {/* Child Selection */}
+              <div className="space-y-2">
+                <Label htmlFor="child-select" className="text-sm font-medium">
+                  Select Child *
+                </Label>
+                <Select value={selectedChild} onValueChange={setSelectedChild}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Choose a child" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {data?.students?.map((student) => (
+                      <SelectItem key={student.id} value={student.id}>
+                        {student.name} - {student.className}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Questions */}
+              <div className="space-y-4">
+                <h3 className="text-lg font-semibold text-gray-900">
+                  Please answer the following questions:
+                </h3>
+                {formData.map((item, index) => (
+                  <Card key={item.id} className="border border-gray-200">
+                    <CardContent className="p-4">
+                      <div className="space-y-3">
+                        <p className="font-medium text-gray-900">
+                          {index + 1}. {item.question}
+                        </p>
+
+                        {/* Yes/No Buttons */}
+                        <div className="flex space-x-4">
+                          <Button
+                            type="button"
+                            variant={
+                              item.answer === true ? "default" : "outline"
+                            }
+                            size="sm"
+                            onClick={() => handleAnswerChange(item.id, true)}
+                            className={
+                              item.answer === true
+                                ? "bg-green-600 hover:bg-green-700"
+                                : ""
+                            }
+                          >
+                            Yes
+                          </Button>
+                          <Button
+                            type="button"
+                            variant={
+                              item.answer === false ? "default" : "outline"
+                            }
+                            size="sm"
+                            onClick={() => handleAnswerChange(item.id, false)}
+                            className={
+                              item.answer === false
+                                ? "bg-red-600 hover:bg-red-700"
+                                : ""
+                            }
+                          >
+                            No
+                          </Button>
+                        </div>
+
+                        {/* Additional Text Input */}
+                        {item.requiresText &&
+                          ((item.isComplaint && item.answer === true) ||
+                            (!item.isComplaint && item.answer === false)) && (
+                            <div className="mt-3">
+                              <Label className="text-sm text-gray-600">
+                                {item.textLabel || "Please provide details:"}
+                              </Label>
+                              <Input
+                                type="text"
+                                value={item.additionalText}
+                                onChange={(e) =>
+                                  handleTextChange(item.id, e.target.value)
+                                }
+                                placeholder="Enter details..."
+                                className="mt-1"
+                              />
+                            </div>
+                          )}
+
+                        {/* Show if this will create a complaint */}
+                        {((item.isComplaint && item.answer === true) ||
+                          (!item.isComplaint && item.answer === false)) && (
+                          <div className="mt-2 p-2 bg-orange-50 border border-orange-200 rounded">
+                            <p className="text-sm text-orange-800">
+                              ⚠️ This response will be included in your
+                              complaint
+                            </p>
+                          </div>
+                        )}
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+
+              {/* Preview Compiled Complaints */}
+              {compileComplaints() && (
+                <div className="space-y-2">
+                  <Label className="text-sm font-medium text-gray-900">
+                    Complaint Preview:
+                  </Label>
+                  <div className="p-3 border border-gray-200 rounded-md bg-gray-50 min-h-[100px] whitespace-pre-wrap">
+                    {compileComplaints()}
+                  </div>
+                </div>
+              )}
+
+              {/* Action Buttons */}
+              <div className="flex justify-end space-x-3 pt-4 border-t">
+                <Button type="button" variant="outline" onClick={resetForm}>
+                  Cancel
+                </Button>
+                <Button
+                  type="button"
+                  onClick={handleSubmitComplaintForm}
+                  disabled={!selectedChild || !compileComplaints()}
+                  className="bg-[#1e3a8a] hover:bg-[#1e40af]"
+                >
+                  Submit Complaint
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
     </div>
   );

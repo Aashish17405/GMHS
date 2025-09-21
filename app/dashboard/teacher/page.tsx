@@ -16,8 +16,9 @@ import { AddActionModal } from "@/components/AddActionModal";
 import { ComplaintsTable } from "@/components/ComplaintsTable";
 import { RespondToComplaintModal } from "@/components/RespondToComplaintModal";
 import { ViewComplaintModal } from "@/components/ViewComplaintModal";
+import InstallPrompt from "@/components/InstallPrompt";
 import { Users, GraduationCap, Activity, MessageSquare } from "lucide-react";
-import axios from "axios";
+import { apiClient } from "@/lib/api";
 
 interface Student {
   id: string;
@@ -98,13 +99,16 @@ export default function TeacherDashboardPage() {
 
     setLoading(true);
     try {
-      const response = await axios.get(`/api/students?teacherId=${teacherId}`, {
-        headers: {
-          "Cache-Control": "no-cache, no-store, must-revalidate",
-          Pragma: "no-cache",
-          Expires: "0",
-        },
-      });
+      const response = await apiClient.get(
+        `/api/students?teacherId=${teacherId}`,
+        {
+          headers: {
+            "Cache-Control": "no-cache, no-store, must-revalidate",
+            Pragma: "no-cache",
+            Expires: "0",
+          },
+        }
+      );
       setStudents(response.data.students);
       console.log("Fetched students:", response.data);
     } catch (error) {
@@ -119,7 +123,7 @@ export default function TeacherDashboardPage() {
 
     setComplaintsLoading(true);
     try {
-      const response = await axios.get(
+      const response = await apiClient.get(
         `/api/complaints?teacherId=${teacherId}`,
         {
           headers: {
@@ -271,6 +275,7 @@ export default function TeacherDashboardPage() {
               </p>
             </div>
             <div className="flex flex-col sm:flex-row gap-3">
+              <InstallPrompt manualTrigger={true} />
               <AddActionModal
                 teacherId={teacherId || ""}
                 onActionAdded={refreshData}
