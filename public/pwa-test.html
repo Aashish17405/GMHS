@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>PWA Test for GMHS</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 20px;
+        line-height: 1.6;
+      }
+      .test-item {
+        margin: 20px 0;
+        padding: 15px;
+        border: 1px solid #ddd;
+        border-radius: 5px;
+      }
+      .pass {
+        background-color: #d4edda;
+        border-color: #c3e6cb;
+      }
+      .fail {
+        background-color: #f8d7da;
+        border-color: #f5c6cb;
+      }
+      .info {
+        background-color: #d1ecf1;
+        border-color: #bee5eb;
+      }
+      button {
+        background-color: #3b82f6;
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 5px;
+        cursor: pointer;
+        margin: 5px;
+      }
+      button:hover {
+        background-color: #2563eb;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>PWA Functionality Test for GMHS</h1>
+
+    <div id="service-worker-test" class="test-item">
+      <h3>🔧 Service Worker</h3>
+      <p id="sw-status">Checking...</p>
+      <button onclick="checkServiceWorker()">Recheck</button>
+    </div>
+
+    <div id="manifest-test" class="test-item">
+      <h3>📄 Web App Manifest</h3>
+      <p id="manifest-status">Checking...</p>
+      <button onclick="checkManifest()">Recheck</button>
+    </div>
+
+    <div id="install-test" class="test-item">
+      <h3>📱 Install Capability</h3>
+      <p id="install-status">Checking...</p>
+      <button onclick="checkInstallability()">Recheck</button>
+    </div>
+
+    <div id="offline-test" class="test-item">
+      <h3>🌐 Offline Capability</h3>
+      <p id="offline-status">Checking...</p>
+      <button onclick="testOffline()">Test Offline</button>
+    </div>
+
+    <div id="cache-test" class="test-item">
+      <h3>💾 Cache Storage</h3>
+      <p id="cache-status">Checking...</p>
+      <button onclick="checkCache()">Check Cache</button>
+    </div>
+
+    <div class="test-item info">
+      <h3>📋 How to Test PWA Features:</h3>
+      <ol>
+        <li>
+          <strong>Desktop Chrome:</strong> Look for install icon in address bar
+        </li>
+        <li>
+          <strong>Mobile:</strong> Use "Add to Home Screen" from browser menu
+        </li>
+        <li>
+          <strong>Offline:</strong> Disconnect internet and navigate to cached
+          pages
+        </li>
+        <li>
+          <strong>Standalone:</strong> Open installed app (should look like
+          native app)
+        </li>
+      </ol>
+    </div>
+
+    <script>
+      // Check Service Worker
+      function checkServiceWorker() {
+        const statusEl = document.getElementById("sw-status");
+        const containerEl = document.getElementById("service-worker-test");
+
+        if ("serviceWorker" in navigator) {
+          navigator.serviceWorker
+            .getRegistration()
+            .then((registration) => {
+              if (registration) {
+                statusEl.textContent = `✅ Service Worker registered at scope: ${registration.scope}`;
+                containerEl.className = "test-item pass";
+              } else {
+                statusEl.textContent = "❌ Service Worker not registered";
+                containerEl.className = "test-item fail";
+              }
+            })
+            .catch((error) => {
+              statusEl.textContent = `❌ Error checking Service Worker: ${error}`;
+              containerEl.className = "test-item fail";
+            });
+        } else {
+          statusEl.textContent = "❌ Service Worker not supported";
+          containerEl.className = "test-item fail";
+        }
+      }
+
+      // Check Manifest
+      function checkManifest() {
+        const statusEl = document.getElementById("manifest-status");
+        const containerEl = document.getElementById("manifest-test");
+
+        fetch("/manifest.json")
+          .then((response) => response.json())
+          .then((manifest) => {
+            statusEl.innerHTML = `✅ Manifest loaded successfully<br>
+                        Name: ${manifest.name}<br>
+                        Short Name: ${manifest.short_name}<br>
+                        Icons: ${manifest.icons.length} sizes`;
+            containerEl.className = "test-item pass";
+          })
+          .catch((error) => {
+            statusEl.textContent = `❌ Manifest not found or invalid: ${error}`;
+            containerEl.className = "test-item fail";
+          });
+      }
+
+      // Check Install Capability
+      function checkInstallability() {
+        const statusEl = document.getElementById("install-status");
+        const containerEl = document.getElementById("install-test");
+
+        // Check if running in standalone mode
+        if (window.matchMedia("(display-mode: standalone)").matches) {
+          statusEl.textContent =
+            "✅ App is running in standalone mode (already installed)";
+          containerEl.className = "test-item pass";
+          return;
+        }
+
+        // Check for beforeinstallprompt event support
+        let installPromptSupported = false;
+        window.addEventListener("beforeinstallprompt", (e) => {
+          installPromptSupported = true;
+          statusEl.textContent =
+            "✅ App is installable (beforeinstallprompt fired)";
+          containerEl.className = "test-item pass";
+        });
+
+        // Fallback check
+        setTimeout(() => {
+          if (!installPromptSupported) {
+            statusEl.textContent =
+              "⚠️ Install prompt not detected (may still be installable via browser menu)";
+            containerEl.className = "test-item info";
+          }
+        }, 2000);
+      }
+
+      // Test Offline
+      function testOffline() {
+        const statusEl = document.getElementById("offline-status");
+        const containerEl = document.getElementById("offline-test");
+
+        if ("serviceWorker" in navigator) {
+          navigator.serviceWorker.ready.then(() => {
+            statusEl.innerHTML = `✅ Service Worker ready for offline caching<br>
+                        Try disconnecting internet and refreshing the page`;
+            containerEl.className = "test-item pass";
+          });
+        } else {
+          statusEl.textContent = "❌ Offline functionality not available";
+          containerEl.className = "test-item fail";
+        }
+      }
+
+      // Check Cache
+      function checkCache() {
+        const statusEl = document.getElementById("cache-status");
+        const containerEl = document.getElementById("cache-test");
+
+        if ("caches" in window) {
+          caches
+            .keys()
+            .then((cacheNames) => {
+              if (cacheNames.length > 0) {
+                statusEl.innerHTML = `✅ Cache available<br>
+                            Found ${
+                              cacheNames.length
+                            } cache(s): ${cacheNames.join(", ")}`;
+                containerEl.className = "test-item pass";
+              } else {
+                statusEl.textContent =
+                  "⚠️ Cache API available but no caches found yet";
+                containerEl.className = "test-item info";
+              }
+            })
+            .catch((error) => {
+              statusEl.textContent = `❌ Error accessing cache: ${error}`;
+              containerEl.className = "test-item fail";
+            });
+        } else {
+          statusEl.textContent = "❌ Cache API not supported";
+          containerEl.className = "test-item fail";
+        }
+      }
+
+      // Run all checks on load
+      window.addEventListener("load", () => {
+        checkServiceWorker();
+        checkManifest();
+        checkInstallability();
+        testOffline();
+        checkCache();
+      });
+    </script>
+  </body>
+</html>

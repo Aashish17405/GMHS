@@ -1,0 +1,102 @@
+{
+  "name": "GMHS - School Management System",
+  "short_name": "GMHS",
+  "description": "A comprehensive school management system for administrators, teachers, and parents",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#3b82f6",
+  "orientation": "portrait-primary",
+  "scope": "/",
+  "categories": ["education", "productivity", "utilities"],
+  "lang": "en-US",
+  "dir": "ltr",
+  "icons": [
+    {
+      "src": "/icons/icon-72x72.png",
+      "sizes": "72x72",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icons/icon-96x96.png",
+      "sizes": "96x96",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icons/icon-128x128.png",
+      "sizes": "128x128",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icons/icon-144x144.png",
+      "sizes": "144x144",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icons/icon-152x152.png",
+      "sizes": "152x152",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icons/icon-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icons/icon-384x384.png",
+      "sizes": "384x384",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icons/icon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Admin Dashboard",
+      "short_name": "Admin",
+      "description": "Access admin dashboard directly",
+      "url": "/dashboard/admin",
+      "icons": [{ "src": "/icons/admin-icon-96x96.png", "sizes": "96x96" }]
+    },
+    {
+      "name": "Teacher Dashboard",
+      "short_name": "Teacher",
+      "description": "Access teacher dashboard directly",
+      "url": "/dashboard/teacher",
+      "icons": [{ "src": "/icons/teacher-icon-96x96.png", "sizes": "96x96" }]
+    },
+    {
+      "name": "Parent Dashboard",
+      "short_name": "Parent",
+      "description": "Access parent dashboard directly",
+      "url": "/dashboard/parent",
+      "icons": [{ "src": "/icons/parent-icon-96x96.png", "sizes": "96x96" }]
+    }
+  ],
+  "related_applications": [],
+  "prefer_related_applications": false,
+  "display_override": ["window-controls-overlay", "standalone", "minimal-ui"],
+  "edge_side_panel": {
+    "preferred_width": 400
+  },
+  "file_handlers": [
+    {
+      "action": "/",
+      "accept": {
+        "text/csv": [".csv"],
+        "application/pdf": [".pdf"]
+      }
+    }
+  ]
+}
